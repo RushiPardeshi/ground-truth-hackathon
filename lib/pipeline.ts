@@ -216,7 +216,8 @@ async function extractPages(
         }
         const tool = canonicalTool(it.tool, watchlist);
         const source = it.source_type === "other" ? guessSource(p.url, domain, cat) : it.source_type;
-        const pub = isoDate(it.published_date) || isoDate(p.page_age);
+        const urlYear = p.url.match(/\/(20[0-2]\d)\//)?.[1];
+        const pub = isoDate(it.published_date) || isoDate(p.page_age) || (urlYear ? `${urlYear}-01-01` : null);
         const date = pub || today;
         const e: Evidence = {
           id: sha1(p.url + tool + it.evidence_quote),
@@ -330,6 +331,11 @@ async function runResearch(run: Run, args: StartArgs & { domain: string }) {
     const src = guessSource(r.url, domain, cat);
     const aboutCo = hostOf(r.url).endsWith(domain) || mentionsCompany(r, company, domain);
     // own-domain consumer pages (stores, menus) are noise unless they mention the category
+    const aggregatorSearch = /indeed\.com\/(q-|jobs\?)|dice\.com\/jobs\/q-|glassdoor\.com\/Job\/|linkedin\.com\/jobs\/search|ziprecruiter\.com\/(jobs-search|Jobs\/)/i.test(r.url);
+    if (aggregatorSearch) return false;
+    const vendorCareers = Object.values(cat.vendorDomains).some((v) => hostOf(r.url).endsWith(v)) && /careers|jobs/.test(r.url);
+    const toolAsCompany = watchlist.some((w) => new RegExp(`/(co|company|companies)/${w.toLowerCase().replace(/\s+/g, "-")}`).test(r.url.toLowerCase()));
+    if (vendorCareers || toolAsCompany) return false;
     const ownConsumerPage = hostOf(r.url).endsWith(domain) && !/blog|engineering|careers|jobs|press|news|tech/.test(r.url);
     const vendorNotAboutCo = src === "vendor_case_study" && !`${r.url} ${r.title ?? ""}`.toLowerCase().includes(company.toLowerCase().split(" ")[0]);
     return aboutCo && !ownConsumerPage && !vendorNotAboutCo && (mentionsTool(r) || src === "job_post" || src === "vendor_case_study");

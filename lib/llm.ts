@@ -128,11 +128,17 @@ export function ruleExtract(text: string, company: string, tools: string[], isJo
     const near = `${sentences[si - 1] ?? ""} ${s} ${sentences[si + 1] ?? ""}`.toLowerCase();
     // Rule path is conservative: the page must be about the company (title/URL) or the company
     // must be named right next to the tool, or it's a job post on the company's board.
-    const aboutCo = pageAboutCo || near.includes(co) || isJobPost;
+    const aboutCo = pageAboutCo || near.includes(co);
+    void isJobPost;
     for (const tool of tools) {
       const t = tool.toLowerCase();
       const re = new RegExp(`\\b${t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
       if (!re.test(l) || seen.has(tool)) continue;
+      const te = t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      // Reversed relationships: the tool vendor is the employer, or the tool is the company's customer.
+      if (new RegExp(`(within|at|join|joining|about|across) ${te}\\b`).test(l)) continue;
+      if (new RegExp(`${te}[^.]{0,80}\\b(use|uses|leverage|leverages|chose|selects?)\\s+${co.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`).test(l)) continue;
+      if (!/monitor|log|observab|dashboard|metric|alert|trac|apm|telemetry|sre|reliab|incident|experience|tool|stack|pipe|instrument|migrat/.test(l)) continue;
       let signal: ExtractedItem["signal_type"] = isJobPost ? "hiring_for" : "uses";
       const idx = l.indexOf(t);
       const before = l.slice(Math.max(0, idx - 60), idx);

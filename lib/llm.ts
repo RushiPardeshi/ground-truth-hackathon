@@ -111,3 +111,41 @@ export function relevantWindows(text: string, terms: string[], radius = 700, max
   }
   return out.slice(0, maxChars);
 }
+
+// --- Rule-based fallback (no LLM). Quotes are sentences taken straight from the page. ---
+export function ruleExtract(text: string, company: string, tools: string[], isJobPost: boolean, titleUrl = ""): ExtractedItem[] {
+  const clean = text.replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/[*_`#>|]/g, " ");
+  const sentences = clean.split(/(?<=[.!?])\s+|\n+/).map((s) => s.replace(/\s+/g, " ").trim()).filter((s) => s.length > 20 && s.length < 400);
+  const lowerAll = clean.toLowerCase();
+  const co = company.toLowerCase();
+  const pageAboutCo = titleUrl.toLowerCase().includes(co) || titleUrl.toLowerCase().includes(co.replace(/\s+/g, ""));
+  void lowerAll;
+  const out: ExtractedItem[] = [];
+  const seen = new Set<string>();
+  for (let si = 0; si < sentences.length; si++) {
+    const s = sentences[si];
+    const l = s.toLowerCase();
+    const near = `${sentences[si - 1] ?? ""} ${s} ${sentences[si + 1] ?? ""}`.toLowerCase();
+    // Rule path is conservative: the page must be about the company (title/URL) or the company
+    // must be named right next to the tool, or it's a job post on the company's board.
+    const aboutCo = pageAboutCo || near.includes(co) || isJobPost;
+    for (const tool of tools) {
+      const t = tool.toLowerCase();
+      const re = new RegExp(`\\b${t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
+      if (!re.test(l) || seen.has(tool)) continue;
+      let signal: ExtractedItem["signal_type"] = isJobPost ? "hiring_for" : "uses";
+      const idx = l.indexOf(t);
+      const before = l.slice(Math.max(0, idx - 60), idx);
+      const after = l.slice(idx, idx + 60);
+      if (/(migrat\w*|mov\w* (away )?from|replac\w*|sunset\w*|off of)\s*$/.test(before.trim()) || /\b(from)\s*$/.test(before.trim()) && /migrat|mov/.test(l)) signal = "migrating_from";
+      else if (/(migrat\w* to|mov\w* to|switch\w* to|adopt\w*|onto)\s*$/.test(before.trim())) signal = "migrating_to";
+      else if (/evaluat|pilot|trial|proof of concept|poc\b/.test(l)) signal = "evaluating";
+      void after;
+      const words = s.split(" ");
+      const quote = words.length > 25 ? words.slice(Math.max(0, words.findIndex((w) => w.toLowerCase().includes(t.split(" ")[0])) - 10)).slice(0, 25).join(" ") : s;
+      out.push({ tool, signal_type: signal, evidence_quote: quote, source_type: isJobPost ? "job_post" : "other", about_target_company: aboutCo, published_date: "" });
+      seen.add(tool);
+    }
+  }
+  return out;
+}

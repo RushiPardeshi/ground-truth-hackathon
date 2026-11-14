@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "tripwire": {
+      "command": "npx",
+      "args": ["tsx", "mcp/server.mts"],
+      "env": { "TRIPWIRE_URL": "http://localhost:3000", "TRIPWIRE_USER": "agent" }
+    }
+  }
+}

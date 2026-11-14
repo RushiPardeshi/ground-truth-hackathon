@@ -1,7 +1,10 @@
 import crypto from "crypto";
 import { CAPS, JOB_DOMAINS, SCRIPT_SIGNATURES, getCategory, type CategoryPreset } from "./config";
 import { addChanges, getAccount, getAlias, latestSnapshot, saveSnapshot, setAlias, upsertAccount } from "./db";
-import { extractFromPage, normalizeText, quoteAppears, relevantWindows } from "./llm";
+import { extractFromPage, normalizeText, quoteAppears, relevantWindows, ruleExtract, type ExtractedItem } from "./llm";
+
+// Once the LLM fails auth, stop calling it for this process (re-checked on restart).
+const llmState = { down: !process.env.ANTHROPIC_API_KEY };
 import { canonicalTool, confidenceFor, hostOf, isStale, reconcile, score } from "./reconcile";
 import type { ApiCallLog, ChangeItem, Evidence, RunState, Snapshot, TraceEvent } from "./types";
 import { answer, contents, research, search, type CallSink, type PageContent, type SearchResult } from "./you";
@@ -78,6 +81,7 @@ function isoDate(s?: string | null): string | null {
 
 function guessSource(url: string, domain: string, cat: CategoryPreset): Evidence["source_type"] {
   const h = hostOf(url);
+  if (/\/blog\/|engineering\.|\/engineering\//.test(url) && !JOB_DOMAINS.some((j) => h.endsWith(j))) return "eng_blog";
   if (JOB_DOMAINS.some((j) => h.endsWith(j)) || /careers|jobs|\/job\//.test(url)) return "job_post";
   if (Object.values(cat.vendorDomains).some((v) => h.endsWith(v))) return "vendor_case_study";
   if (h.endsWith(domain) && /blog|engineering/.test(url + h)) return "eng_blog";
@@ -185,9 +189,24 @@ async function extractPages(
     const windows = relevantWindows(text, terms);
     const t0 = Date.now();
     try {
-      const { items, tokens: tk } = await extractFromPage({ company, domain, tools: watchlist, url: p.url, title: p.title, text: windows });
-      tokens += tk;
-      run.state.calls.push({ api: "llm", ms: Date.now() - t0, cost: 0, ok: true, note: p.url, tokens: tk });
+      let items: ExtractedItem[];
+      if (llmState.down) {
+        items = ruleExtract(windows, company, watchlist, guessSource(p.url, domain, cat) === "job_post", `${p.title ?? ""} ${p.url}`);
+      } else {
+        try {
+          const r = await extractFromPage({ company, domain, tools: watchlist, url: p.url, title: p.title, text: windows });
+          items = r.items;
+          tokens += r.tokens;
+          run.state.calls.push({ api: "llm", ms: Date.now() - t0, cost: 0, ok: true, note: p.url, tokens: r.tokens });
+        } catch (err) {
+          const msg = (err as Error).message;
+          if (/401|403|authentication|api[- ]key|credit|402/i.test(msg)) {
+            if (!llmState.down) run.trace("error", `LLM unavailable (${msg.slice(0, 80)}). Switching to rule-based extraction (verbatim sentences only).`);
+            llmState.down = true;
+          } else run.trace("error", `LLM failed on ${p.url}: ${msg.slice(0, 120)}; using rule-based extraction for this page`);
+          items = ruleExtract(windows, company, watchlist, guessSource(p.url, domain, cat) === "job_post", `${p.title ?? ""} ${p.url}`);
+        }
+      }
       const norm = normalizeText(text);
       let kept = 0;
       for (const it of items) {
@@ -311,7 +330,9 @@ async function runResearch(run: Run, args: StartArgs & { domain: string }) {
     const src = guessSource(r.url, domain, cat);
     const aboutCo = hostOf(r.url).endsWith(domain) || mentionsCompany(r, company, domain);
     // own-domain consumer pages (stores, menus) are noise unless they mention the category
-    return aboutCo && (mentionsTool(r) || src === "job_post" || src === "vendor_case_study");
+    const ownConsumerPage = hostOf(r.url).endsWith(domain) && !/blog|engineering|careers|jobs|press|news|tech/.test(r.url);
+    const vendorNotAboutCo = src === "vendor_case_study" && !`${r.url} ${r.title ?? ""}`.toLowerCase().includes(company.toLowerCase().split(" ")[0]);
+    return aboutCo && !ownConsumerPage && !vendorNotAboutCo && (mentionsTool(r) || src === "job_post" || src === "vendor_case_study");
   });
   relevant.sort((a, b) => priority(a.url, domain, cat) - priority(b.url, domain, cat));
   run.trace("search", `${seen.size} unique URLs, ${relevant.length} mention ${company}`);

@@ -7,7 +7,8 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
-    "research": "tsx --env-file=.env.local scripts/run.ts"
+    "research": "tsx --env-file=.env.local scripts/run.ts",
+    "mcp": "tsx mcp/server.mts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.8.0",

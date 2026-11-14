@@ -528,8 +528,9 @@ async function runWatch(run: Run, key: string, user: string) {
     created_at: now, created_by: user,
     page_hashes: { ...prev.page_hashes, ...ex.hashes, ...Object.fromEntries(rechecked.filter((p) => p.markdown).map((p) => [p.url, toolFingerprint(p.markdown!, watchlist)])) },
     seen_urls: [...new Set([...prev.seen_urls, ...fresh.map((x) => x.url)])],
-    cost: run.state.cost,
-    calls: run.state.calls.filter((c) => c.api !== "llm" && c.api !== "http").length,
+    // cumulative: what it cost to build this snapshot (used for "saved by sharing")
+    cost: prev.cost + run.state.cost,
+    calls: prev.calls + run.state.calls.filter((c) => c.api !== "llm" && c.api !== "http").length,
     trace: run.state.trace,
   };
   saveSnapshot(snap);

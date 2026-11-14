@@ -4,6 +4,18 @@
 
 Tripwire tells an account executive at a challenger observability vendor (Datadog, Grafana, Honeycomb, Chronosphere) **which observability tools a target company runs today, whether it's switching, and why now**. Every claim links to a source, quotes it verbatim, and carries a date. Then Tripwire watches the account and reports what changed.
 
+![Shared sheet with an expanded org map](docs/orgmap.png)
+
+## The shared sheet
+
+The home page is a Clay-style **shared team sheet**: one row per account, enriched live by You.com agents.
+
+- **Rows:** paste domains or company names (names resolve to domains, so "Walt Disney Co." and disney.com land on one row). New rows are researched straight away, 2 at a time.
+- **Built-in columns:** Displacement score, incumbent stack, challengers (chips link to the receipt; dot = confidence), top signal, hiring/receipts, owner and last refresh.
+- **AI columns:** "+ Add AI column" with a prompt such as *Which cloud provider does {company} run on?* Every cell is answered by the **You.com Answer API**; click a cell to see its sources and verbatim excerpts.
+- **Drill-down:** ▸ on a row opens the **org map**, company → regions → teams → the software each team uses (verbatim quote + link) and public people on that team (title + link). It's built by the **You.com Research API with a structured `output_schema`**, seeded with our verified evidence. Any tool or person whose source URL isn't among Research's returned sources (or our evidence) is dropped, and the count is shown.
+- **Monthly refresh:** a server scheduler runs a You.com watch pass on every row whose last check is older than 30 days (`TRIPWIRE_REFRESH_DAYS`), adds new evidence, job posts and removed postings to the change feed, and re-scores.
+
 ![Account page](docs/account.png)
 
 ## The problem
@@ -44,8 +56,8 @@ company + domain + watchlist
 |---|---|
 | **Web Search** `POST ydc-index.io/v1/search` | Discovery: `include_domains` for ATS boards (Greenhouse, Lever, Ashby, Workday), vendor sites and the company's own site; `freshness: month/week` for recent signals and watch mode; domain resolution for company names |
 | **Contents** `POST ydc-index.io/v1/contents` | Full pages as Markdown for extraction; homepage as **HTML** for script detection (falls back to a plain fetch only if no `<script>` tags come back); `max_age: 0` live re-reads in watch mode |
-| **Research** `POST api.you.com/v1/research` (`research_effort: standard`) | One cited "why now" brief per account, seeded with our verified evidence |
-| **Answer** `POST api.you.com/v1/answer` | Quick cited check on the top conflict |
+| **Research** `POST api.you.com/v1/research` (`research_effort: standard`) | Cited "why now" brief per account; the **org map** (regions → teams → tools & people) via `output_schema` |
+| **Answer** `POST api.you.com/v1/answer` | AI prompt columns in the sheet (one cited answer per cell); quick cited check on the top conflict |
 
 Every call is timed, cost-estimated at list price, capped per run (15 searches, 25 pages, 1 research, 1 answer), logged in the agent trace, and the run total is shown in the UI.
 
@@ -55,7 +67,7 @@ Every call is timed, cost-estimated at list price, capped per run (15 searches, 
 
 Tripwire is built to be driven by other agents, e.g. parallel coding agents coordinated through an OpenCrawl board, as well as by humans. Agents and humans share one database, one ownership model and one cost log. See [AGENTS.md](AGENTS.md).
 
-- **MCP server** (`.mcp.json` included): `research_account`, `check_for_changes`, `get_account`, `list_accounts`
+- **MCP server** (`.mcp.json` included): `research_account`, `check_for_changes`, `get_account`, `list_accounts`, `add_rows`, `add_prompt_column`, `get_sheet`, `map_org`
 - **CLI:** `npm run research -- "Anaplan" anaplan.com` → evidence JSON on stdout, trace on stderr
 - **HTTP:** `POST /api/research`, `GET /api/runs/:id`, `GET /api/accounts`, `GET /api/accounts/:key`, `POST /api/accounts/:key/check`
 
@@ -71,7 +83,6 @@ Data lives in `data/tripwire.db` (SQLite, git-ignored).
 
 **Demo safety:** if a live run fails (e.g. wifi), the last good snapshot is shown and clearly labelled *CACHED*. The default demo run is live.
 
-![Home](docs/home.png)
 
 ## Stack
 

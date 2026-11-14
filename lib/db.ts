@@ -85,3 +85,36 @@ export function getAlias(alias: string): string | null {
 export function setAlias(alias: string, domain: string) {
   db.prepare("INSERT OR REPLACE INTO aliases (alias, domain) VALUES (?, ?)").run(alias, domain);
 }
+
+// ---------- grid: org maps, prompt columns, cells ----------
+db.exec(`
+CREATE TABLE IF NOT EXISTS orgmaps ( key TEXT PRIMARY KEY, at TEXT, by TEXT, data TEXT );
+CREATE TABLE IF NOT EXISTS columns ( id TEXT PRIMARY KEY, name TEXT, prompt TEXT, created_by TEXT, created_at TEXT );
+CREATE TABLE IF NOT EXISTS cells ( key TEXT, column_id TEXT, value TEXT, citations TEXT, at TEXT, by TEXT, status TEXT, PRIMARY KEY (key, column_id) );
+`);
+
+export function saveOrgMap(key: string, by: string, data: unknown) {
+  db.prepare("INSERT OR REPLACE INTO orgmaps (key, at, by, data) VALUES (?, ?, ?, ?)").run(key, new Date().toISOString(), by, JSON.stringify(data));
+}
+export function getOrgMap(key: string): { at: string; by: string; data: unknown } | null {
+  const r = db.prepare("SELECT * FROM orgmaps WHERE key = ?").get(key) as { at: string; by: string; data: string } | undefined;
+  return r ? { at: r.at, by: r.by, data: JSON.parse(r.data) } : null;
+}
+export interface Column { id: string; name: string; prompt: string; created_by: string; created_at: string }
+export interface Cell { key: string; column_id: string; value: string; citations: { source: string; excerpts: string[] }[]; at: string; by: string; status: string }
+export function listColumns(): Column[] {
+  return db.prepare("SELECT * FROM columns ORDER BY created_at").all() as Column[];
+}
+export function addColumn(c: Column) {
+  db.prepare("INSERT INTO columns (id, name, prompt, created_by, created_at) VALUES (@id, @name, @prompt, @created_by, @created_at)").run(c);
+}
+export function deleteColumn(id: string) {
+  db.prepare("DELETE FROM columns WHERE id = ?").run(id);
+  db.prepare("DELETE FROM cells WHERE column_id = ?").run(id);
+}
+export function setCell(c: Omit<Cell, "citations"> & { citations: Cell["citations"] }) {
+  db.prepare("INSERT OR REPLACE INTO cells (key, column_id, value, citations, at, by, status) VALUES (?, ?, ?, ?, ?, ?, ?)").run(c.key, c.column_id, c.value, JSON.stringify(c.citations), c.at, c.by, c.status);
+}
+export function listCells(): Cell[] {
+  return (db.prepare("SELECT * FROM cells").all() as (Omit<Cell, "citations"> & { citations: string })[]).map((r) => ({ ...r, citations: JSON.parse(r.citations || "[]") }));
+}

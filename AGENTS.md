@@ -16,6 +16,10 @@ claude mcp add tripwire --env TRIPWIRE_URL=http://localhost:3000 --env TRIPWIRE_
 | `check_for_changes({account_key, user?})` | Lightweight watch pass + diff; appends to the shared change feed | ~$0.02 |
 | `get_account({account_key})` | Latest snapshot, ownership, change feed | $0 |
 | `list_accounts()` | Team table + total spend saved | $0 |
+| `add_rows({entries, user?})` | Add domains/company names to the shared sheet and queue live research | ~$0.11 per new row |
+| `add_prompt_column({name, prompt, user?})` | New AI column; every row answered by You.com Answer with citations (`{company}`, `{domain}` placeholders) | ~$0.005 per cell |
+| `get_sheet()` | Whole sheet: rows, scores, stacks, prompt columns and cited cells | $0 |
+| `map_org({account_key, refresh?})` | Regions → teams → tools & people, every node with a source URL | ~$0.05 |
 
 Set `TRIPWIRE_USER` to a distinct name per agent (e.g. `agent-backend`, `agent-sdr`) so the team table and change feed show who did what.
 

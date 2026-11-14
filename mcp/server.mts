@@ -129,4 +129,55 @@ server.registerTool(
   async () => text(await api("/api/accounts"))
 );
 
+server.registerTool(
+  "add_rows",
+  { description: "Add companies (domains or names) as rows of the team's shared sheet and research them live.", inputSchema: { entries: z.array(z.string()), user: z.string().optional() } },
+  async ({ entries, user }) => {
+    const d = await api("/api/rows", { method: "POST", body: JSON.stringify({ entries, user: user || AGENT_USER }) });
+    if (d.added?.length) await api("/api/grid/research", { method: "POST", body: JSON.stringify({ keys: d.added, user: user || AGENT_USER }) });
+    return text({ ...d, note: "Research queued (2 at a time). Poll get_sheet for results." });
+  }
+);
+
+server.registerTool(
+  "add_prompt_column",
+  {
+    description: "Add an AI column to the shared sheet. Every row is answered by the You.com Answer API with citations. Use {company} and {domain} in the prompt.",
+    inputSchema: { name: z.string(), prompt: z.string(), user: z.string().optional() },
+  },
+  async ({ name, prompt, user }) => text(await api("/api/columns", { method: "POST", body: JSON.stringify({ name, prompt, user: user || AGENT_USER }) }))
+);
+
+server.registerTool(
+  "get_sheet",
+  { description: "Read the whole shared sheet: rows (score, incumbent/challenger tools, signals, owner, next auto-refresh), prompt columns and their cited cells. No external calls.", inputSchema: {} },
+  async () => {
+    const d = await api("/api/grid");
+    const cols = d.columns ?? [];
+    return text({
+      columns: cols.map((c: any) => ({ id: c.id, name: c.name, prompt: c.prompt })),
+      rows: (d.rows ?? []).map((r: any) => ({
+        key: r.key, company: r.company, score: r.score, verdict: r.verdict, incumbents: r.incumbents.map((t: any) => t.tool), challengers: r.challengers.map((t: any) => t.tool),
+        top_signal: r.top_signal, owner: r.owner, status: r.research_status,
+        cells: Object.fromEntries(cols.map((c: any) => { const cell = d.cells.find((x: any) => x.key === r.key && x.column_id === c.id); return [c.name, cell ? { value: cell.value, sources: cell.citations.map((x: any) => x.source) } : null]; })),
+      })),
+    });
+  }
+);
+
+server.registerTool(
+  "map_org",
+  { description: "Build (or read) an account's org map: regions → teams → software each team uses and public people on those teams, each with a source URL. One You.com Research call (~$0.05).", inputSchema: { account_key: z.string(), refresh: z.boolean().default(false), user: z.string().optional() } },
+  async ({ account_key, refresh, user }) => {
+    const path = `/api/accounts/${encodeURIComponent(account_key)}/orgmap`;
+    let s = await api(path);
+    if (refresh || !s.map) {
+      await api(path, { method: "POST", body: JSON.stringify({ user: user || AGENT_USER }) });
+      const t0 = Date.now();
+      do { await new Promise((r) => setTimeout(r, 2000)); s = await api(path); } while (s.running && Date.now() - t0 < 120_000);
+    }
+    return text(s.map ?? s);
+  }
+);
+
 await server.connect(new StdioServerTransport());

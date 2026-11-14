@@ -539,3 +539,30 @@ async function runWatch(run: Run, key: string, user: string) {
   run.trace("save", `${finalChanges.length} change items; $${run.state.cost.toFixed(4)} spent`);
   run.state.status = "done";
 }
+
+// ---------- batch research queue for the grid (max 2 concurrent) ----------
+const q = globalThis as unknown as { __twQueue?: { pending: { key: string; user: string }[]; active: Map<string, string> } };
+export const queue = q.__twQueue ?? { pending: [], active: new Map<string, string>() };
+q.__twQueue = queue;
+
+export function enqueueResearch(keys: string[], user: string) {
+  for (const key of keys) if (!queue.active.has(key) && !queue.pending.some((p) => p.key === key)) queue.pending.push({ key, user });
+  pump();
+}
+
+function pump() {
+  while (queue.active.size < 2 && queue.pending.length) {
+    const { key, user } = queue.pending.shift()!;
+    const a = getAccount(key);
+    if (!a) continue;
+    const st = startResearch({ company: a.company, domain: a.domain, category: a.category, user });
+    queue.active.set(key, st.id);
+    const wait = setInterval(() => {
+      if (runs.get(st.id)?.status !== "running") {
+        clearInterval(wait);
+        queue.active.delete(key);
+        pump();
+      }
+    }, 1000);
+  }
+}

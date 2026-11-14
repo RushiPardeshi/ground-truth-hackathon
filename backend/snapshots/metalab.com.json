@@ -1,0 +1,248 @@
+{
+  "company_name": "MetaLab",
+  "domain": "metalab.com",
+  "timestamp": "2026-11-14 19:04:07 UTC",
+  "competitors_evaluated": [],
+  "script_tools": [],
+  "job_signals": [
+    {
+      "title": "Job Application for Design Operations Manager (Contract) at Metalab",
+      "url": "https://boards.greenhouse.io/metalab/jobs/5744610",
+      "mentioned_tools": [],
+      "is_migration": false,
+      "confidence": "Strong",
+      "confidence_score": 0.85,
+      "receipt": {
+        "source_url": "https://boards.greenhouse.io/metalab/jobs/5744610",
+        "quote": "We are open to remote candidates located within PST to BRT time zones. Please note this is a 14-month contract beginning May 2024. Metalab is seeking a Design Operations Manager to take the lead on driving process, team coordination, design tooling, communication, and design culture within our 60+ person design and research team.",
+        "source_type": "ATS Job Posting",
+        "discovered_at": "2026-11-14 14:04:05"
+      }
+    },
+    {
+      "title": "Job Application for Senior DevOps Engineer, Contractor at Metalab",
+      "url": "https://boards.greenhouse.io/metalab/jobs/5657209",
+      "mentioned_tools": [],
+      "is_migration": false,
+      "confidence": "Strong",
+      "confidence_score": 0.85,
+      "receipt": {
+        "source_url": "https://boards.greenhouse.io/metalab/jobs/5657209",
+        "quote": "Research shows that women and other marginalized groups tend to only apply for a job when they meet every single criteria. Does this role sound like it was made for you, yet you don\u2019t check every box? Reach out anyways! We\u2019re an equal opportunity employer and are dedicated to fostering an inclusive and diverse environment for employees from all walks of life.",
+        "source_type": "ATS Job Posting",
+        "discovered_at": "2026-11-14 14:04:05"
+      }
+    },
+    {
+      "title": "Job Application for Associate Legal Operations Manager at Signifyd",
+      "url": "https://boards.greenhouse.io/signifyd95/jobs/6681473",
+      "mentioned_tools": [],
+      "is_migration": false,
+      "confidence": "Strong",
+      "confidence_score": 0.85,
+      "receipt": {
+        "source_url": "https://boards.greenhouse.io/signifyd95/jobs/6681473",
+        "quote": "As an Associate Legal Ops Manager at Signifyd, you play an integral part of the Legal team primarily responsible for managing systems and processes, building a strong collaborative relationship with our global sales teams and other key cross-funtional teams, reviewing contract terms and meta-data. You will be a key part of a cross-functional team designing policies and optimizing systems as we continue to scale. You will work with the RevOps, Deal Desk, and other cross-functional teams to find innovative ways to simplify our operating model and improve our processes.",
+        "source_type": "ATS Job Posting",
+        "discovered_at": "2026-11-14 14:04:05"
+      }
+    },
+    {
+      "title": "Job Application for Partnerships Coordinator at MetaLab",
+      "url": "https://boards.greenhouse.io/metalab/jobs/3236246",
+      "mentioned_tools": [],
+      "is_migration": false,
+      "confidence": "Strong",
+      "confidence_score": 0.85,
+      "receipt": {
+        "source_url": "https://boards.greenhouse.io/metalab/jobs/3236246",
+        "quote": "From qualifying and engaging new opportunities, to estimation, proposal building and contract writing, you\u2019ll play a huge role in helping our Partnerships Managers bring on new partners. With a knack for starting conversations with companies big and small, you\u2019ll also help find the next great products MetaLab should build.",
+        "source_type": "ATS Job Posting",
+        "discovered_at": "2026-11-14 14:04:05"
+      }
+    },
+    {
+      "title": "Ketch - Senior Manager, RevOps (Sales Ops)",
+      "url": "https://jobs.lever.co/Ketch/44610f0c-aeb1-4cbf-b11a-ae70b130a72e",
+      "mentioned_tools": [],
+      "is_migration": false,
+      "confidence": "Strong",
+      "confidence_score": 0.85,
+      "receipt": {
+        "source_url": "https://jobs.lever.co/Ketch/44610f0c-aeb1-4cbf-b11a-ae70b130a72e",
+        "quote": "Ketch is redefining responsible data use for the AI era. Thousands of brands rely on our software to responsibly collect, control, and activate compliant, clean data across their enterprise ecosystem. The Ketch Data Permissioning Platform simplifies privacy and consent operations, increases revenue from advertising, data, and AI initiatives, and builds trust with customers and partners.",
+        "source_type": "ATS Job Posting",
+        "discovered_at": "2026-11-14 14:04:06"
+      }
+    },
+    {
+      "title": "Ketch - Director of RevOps",
+      "url": "https://jobs.lever.co/Ketch/9acfea51-4ebf-4303-81c9-f428fc2ff90a",
+      "mentioned_tools": [],
+      "is_migration": false,
+      "confidence": "Strong",
+      "confidence_score": 0.85,
+      "receipt": {
+        "source_url": "https://jobs.lever.co/Ketch/9acfea51-4ebf-4303-81c9-f428fc2ff90a",
+        "quote": "Ketch is redefining responsible data use for the AI era. Thousands of brands rely on our software to responsibly collect, control, and activate compliant, clean data across their enterprise ecosystem. The Ketch Data Permissioning Platform simplifies privacy and consent operations, increases revenue from advertising, data, and AI initiatives, and builds trust with customers and partners.",
+        "source_type": "ATS Job Posting",
+        "discovered_at": "2026-11-14 14:04:06"
+      }
+    },
+    {
+      "title": "Samba - Marketing Operations Manager",
+      "url": "https://jobs.lever.co/sambatv/35c52602-e2e3-4cf0-b92e-c3c544b2c8ac",
+      "mentioned_tools": [],
+      "is_migration": false,
+      "confidence": "Strong",
+      "confidence_score": 0.85,
+      "receipt": {
+        "source_url": "https://jobs.lever.co/sambatv/35c52602-e2e3-4cf0-b92e-c3c544b2c8ac",
+        "quote": "We are looking for a Marketing Operations Manager to build and run the systems, data, and processes behind Samba\u2019s marketing engine. In this role, you will own our marketing technology stack, keep our data clean and trustworthy, and make sure every lead, campaign, and dollar can be traced from first touch to closed-won revenue. You will serve as the bridge between marketing, Sales, Revenue Operations, and finance, so that every team works from the same numbers and the same definitions.",
+        "source_type": "ATS Job Posting",
+        "discovered_at": "2026-11-14 14:04:06"
+      }
+    },
+    {
+      "title": "PadSplit - RevOps Lead",
+      "url": "https://jobs.lever.co/padsplit/e77f0dec-7249-46d2-8542-e192acc79be4",
+      "mentioned_tools": [],
+      "is_migration": false,
+      "confidence": "Strong",
+      "confidence_score": 0.85,
+      "receipt": {
+        "source_url": "https://jobs.lever.co/padsplit/e77f0dec-7249-46d2-8542-e192acc79be4",
+        "quote": "RevOps background: 5+ years in revenue operations, sales operations, growth operations, or funnel analytics, ideally in a marketplace, subscription, or high-volume consumer-sales environment.",
+        "source_type": "ATS Job Posting",
+        "discovered_at": "2026-11-14 14:04:06"
+      }
+    },
+    {
+      "title": "Revenue Operations Associate @ Outset",
+      "url": "https://jobs.ashbyhq.com/outset/2b8653a3-f61c-4b25-9b0a-65cf022722db",
+      "mentioned_tools": [],
+      "is_migration": false,
+      "confidence": "Strong",
+      "confidence_score": 0.85,
+      "receipt": {
+        "source_url": "https://jobs.ashbyhq.com/outset/2b8653a3-f61c-4b25-9b0a-65cf022722db",
+        "quote": "Outset invented a better way to do research: AI-powered user interviews. Global brands like Hubspot, Microsoft, Uber and Nestle use Outset to achieve deeper, qualitative insights about their users at unprecedented speed and scale. The research industry is massive (>$140B and growing) and ripe for disruption.",
+        "source_type": "ATS Job Posting",
+        "discovered_at": "2026-11-14 14:04:06"
+      }
+    },
+    {
+      "title": "SVP, Global Revenue Operations & Enablement @ Trustly",
+      "url": "https://jobs.ashbyhq.com/trustly/c9055a75-a438-4f38-b6a8-d8cf506809e7",
+      "mentioned_tools": [],
+      "is_migration": false,
+      "confidence": "Strong",
+      "confidence_score": 0.85,
+      "receipt": {
+        "source_url": "https://jobs.ashbyhq.com/trustly/c9055a75-a438-4f38-b6a8-d8cf506809e7",
+        "quote": "WHO WE ARE At Trustly, we're building a smarter, faster, and more secure financial future by revolutionizing the world of payments. As a global leader in Open Banking Payments, we are establishing Pay by Bank as the new standard at checkout, providing unparalleled freedom, speed, and ease to millions of consumers and merchants worldwide.",
+        "source_type": "ATS Job Posting",
+        "discovered_at": "2026-11-14 14:04:06"
+      }
+    },
+    {
+      "title": "Revenue Operations Technical Consultant (Marketing Ops) @ Lean Layer",
+      "url": "https://jobs.ashbyhq.com/leanlayer/f43f4b8f-5e0f-460e-b432-a11a09f3e480",
+      "mentioned_tools": [],
+      "is_migration": false,
+      "confidence": "Strong",
+      "confidence_score": 0.85,
+      "receipt": {
+        "source_url": "https://jobs.ashbyhq.com/leanlayer/f43f4b8f-5e0f-460e-b432-a11a09f3e480",
+        "quote": "POSITION OVERVIEW Lean Layer is the #1 Rated RevOps Agency on G2, and we\u2019re doubling our consulting team over the next year. Our reputation is built on excellent results, which means we need to keep hiring excellent people. We\u2019re looking for a Revenue Operations Technical Consultant (Marketing Ops) to own the marketing operations layer of our clients\u2019 go-to-market systems.",
+        "source_type": "ATS Job Posting",
+        "discovered_at": "2026-11-14 14:04:06"
+      }
+    },
+    {
+      "title": "Head of RevOps @ Outtake",
+      "url": "https://jobs.ashbyhq.com/outtake/07585c79-d660-442d-9939-8b4575d1f22a?gh_src=S32+job+board",
+      "mentioned_tools": [],
+      "is_migration": false,
+      "confidence": "Strong",
+      "confidence_score": 0.85,
+      "receipt": {
+        "source_url": "https://jobs.ashbyhq.com/outtake/07585c79-d660-442d-9939-8b4575d1f22a?gh_src=S32+job+board",
+        "quote": "ABOUT OUTTAKE Outtake exists to empower and facilitate trust for a digital-first world. Today, impersonation, fraud, AI-driven scams, and identity abuse spread faster than any security team can respond to. So we built something different: an agentic AI platform that proactively detects, monitors, and takes down impersonators, automating protection in hours, not weeks.",
+        "source_type": "ATS Job Posting",
+        "discovered_at": "2026-11-14 14:04:06"
+      }
+    },
+    {
+      "title": "MetaLab Jobs + Careers | Built In",
+      "url": "https://builtin.com/company/metalab/jobs",
+      "mentioned_tools": [],
+      "is_migration": false,
+      "confidence": "Strong",
+      "confidence_score": 0.85,
+      "receipt": {
+        "source_url": "https://builtin.com/company/metalab/jobs",
+        "quote": "Upload your resume to be matched with jobs you're a great fit for. ... Success! We'll use this to further personalize your experience. ... The Principal Brand Designer will lead brand design initiatives, develop brand identities, and ensure alignment with digital products while collaborating with clients and teams to enhance user experiences. ... As Brand Director at Metalab, you'll lead brand design efforts, mentor teams, collaborate on strategy, and shape creative directions across digital platforms.",
+        "source_type": "ATS Job Posting",
+        "discovered_at": "2026-11-14 14:04:07"
+      }
+    },
+    {
+      "title": "Working at MetaLab | Glassdoor",
+      "url": "https://www.glassdoor.com/Overview/Working-at-MetaLab-EI_IE1601946.11,18.htm",
+      "mentioned_tools": [],
+      "is_migration": false,
+      "confidence": "Strong",
+      "confidence_score": 0.85,
+      "receipt": {
+        "source_url": "https://www.glassdoor.com/Overview/Working-at-MetaLab-EI_IE1601946.11,18.htm",
+        "quote": "See what employees say it's like to work at MetaLab. Salaries, reviews, and more - all posted by employees working at MetaLab.",
+        "source_type": "ATS Job Posting",
+        "discovered_at": "2026-11-14 14:04:07"
+      }
+    },
+    {
+      "title": "Jobs at MetaLab",
+      "url": "https://huntr.co/jobs-at-metalab",
+      "mentioned_tools": [],
+      "is_migration": false,
+      "confidence": "Strong",
+      "confidence_score": 0.85,
+      "receipt": {
+        "source_url": "https://huntr.co/jobs-at-metalab",
+        "quote": "MetaLab is a web and interface design firm that runs Ballpark, PixelUnion, and other app interfaces. View Website ... Huntr helps you instantly craft tailored resumes and cover letters, fill out application forms with a single click, effortlessly keep your job hunt organized, and much more. Sign Up for Free ... Huntr Blog Resume Skill Guides Resume Examples Interview Question Guides Job Search Trends Report Affiliate Program Careers Privacy policy Terms of service Write for us LinkedIn Twitter @TryHuntr Email Us",
+        "source_type": "ATS Job Posting",
+        "discovered_at": "2026-11-14 14:04:07"
+      }
+    },
+    {
+      "title": "MetaLab Careers, Jobs, and Salary Information",
+      "url": "https://www.theladders.com/company/metalab-jobs",
+      "mentioned_tools": [],
+      "is_migration": false,
+      "confidence": "Strong",
+      "confidence_score": 0.85,
+      "receipt": {
+        "source_url": "https://www.theladders.com/company/metalab-jobs",
+        "quote": "MetaLab is a design and technology agency that specializes in creating digital products and experiences. The company was founded in 2006 by Andrew Wilkinson and has offices in Victoria, British Columbia and San Francisco, California. MetaLab has worked with a number of high-profile clients, including Slack, Uber, and Coinbase.",
+        "source_type": "ATS Job Posting",
+        "discovered_at": "2026-11-14 14:04:07"
+      }
+    }
+  ],
+  "vendor_proofs": [],
+  "why_now": {
+    "target_company": "MetaLab",
+    "target_domain": "metalab.com",
+    "competitor_stack": [],
+    "trigger_summary": "Hiring Trigger: MetaLab recently posted roles referencing legacy PDF/e-sign platforms (DocuSign/PandaDoc) for sales and legal document execution.",
+    "target_persona": "Head of Operations / RevOps Director / Managing Partner",
+    "recommended_angle": "Position Terms.so as the frictionless, living-document alternative to legacy PDF/e-sign platforms (DocuSign/PandaDoc), eliminating seat licensing overhead and agreement turnaround lag.",
+    "outbound_email": {
+      "subject": "Question regarding MetaLab's contract workflows & legacy PDF/e-sign platforms (DocuSign/PandaDoc)",
+      "body": "Hi [First Name],\n\nI saw that MetaLab is actively expanding your team and managing agreements via legacy PDF/e-sign platforms (DocuSign/PandaDoc) (spotted via your recent Job Application for Design Operations Manager (Contract) at Metalab).\n\nMost agencies and fast-scaling teams find that legacy PDF signing tools stall deal closings\u2014counterparties print, download, or get confused by rigid fields. With Terms.so, agreements live in living markdown documents: counterparties comment inline, negotiate in real-time, and sign with a typed signature with zero login friction.\n\nWould you be open to a 10-minute walk-through on how MetaLab can eliminate contract lag?\n\nBest regards,\n[Your Name]\n\n---\nReceipt proof: https://boards.greenhouse.io/metalab/jobs/5744610\nEvidence: \"We are open to remote candidates located within PST to BRT time zones. Please note this is a 14-month contract beginning May 2024. Metalab i...\"",
+      "cited_receipt_url": "https://boards.greenhouse.io/metalab/jobs/5744610",
+      "cited_quote": "We are open to remote candidates located within PST to BRT time zones. Please note this is a 14-month contract beginning May 2024. Metalab is seeking a Design Operations Manager to take the lead on driving process, team coordination, design tooling, communication, and design culture within our 60+ person design and research team."
+    }
+  }
+}

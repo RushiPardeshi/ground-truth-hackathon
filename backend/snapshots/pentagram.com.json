@@ -1,0 +1,276 @@
+{
+  "company_name": "Pentagram",
+  "domain": "pentagram.com",
+  "timestamp": "2026-11-14 18:55:41 UTC",
+  "competitors_evaluated": [
+    "DocuSign",
+    "PandaDoc",
+    "Adobe Sign"
+  ],
+  "script_tools": [],
+  "job_signals": [
+    {
+      "title": "Jobs at PandaDoc",
+      "url": "https://job-boards.greenhouse.io/pandadoc",
+      "mentioned_tools": [
+        "PandaDoc"
+      ],
+      "is_migration": false,
+      "confidence": "Strong",
+      "confidence_score": 0.85,
+      "receipt": {
+        "source_url": "https://job-boards.greenhouse.io/pandadoc",
+        "quote": "The Future of Documents PandaDoc is the complete digital document solution, designed for efficiency. Create, send, track, and eSign documents -- all from one intuitive and easy-to-use platform. Supercharge your CRM with our PandaDoc integrations. PandaDoc is an ideal platform for managing organizational documents including proposals, quotes, contracts, HR documents, and more.",
+        "source_type": "ATS Job Posting",
+        "discovered_at": "2026-11-14 13:55:38"
+      }
+    },
+    {
+      "title": "Job Application for Sales Operations Manager at Bloomreach",
+      "url": "https://boards.greenhouse.io/bloomreach/jobs/3092885",
+      "mentioned_tools": [
+        "DocuSign",
+        "PandaDoc"
+      ],
+      "is_migration": false,
+      "confidence": "Strong",
+      "confidence_score": 0.85,
+      "receipt": {
+        "source_url": "https://boards.greenhouse.io/bloomreach/jobs/3092885",
+        "quote": "Deployment and adoption of our revenue-generating tools like Clari, PandaDoc, Docusign, Zoominfo, Etailinsights, Linkedin Navigator, etc.",
+        "source_type": "ATS Job Posting",
+        "discovered_at": "2026-11-14 13:55:38"
+      }
+    },
+    {
+      "title": "Job Application for Business Development Writer at Orr Group",
+      "url": "https://boards.greenhouse.io/orrgroup/jobs/5213181003",
+      "mentioned_tools": [
+        "PandaDoc"
+      ],
+      "is_migration": false,
+      "confidence": "Strong",
+      "confidence_score": 0.85,
+      "receipt": {
+        "source_url": "https://boards.greenhouse.io/orrgroup/jobs/5213181003",
+        "quote": "In collaboration with Relationship Manager(s), draft, revise, and ensure execution of all contracts using e-signature software, PandaDoc",
+        "source_type": "ATS Job Posting",
+        "discovered_at": "2026-11-14 13:55:38"
+      }
+    },
+    {
+      "title": "Job Application for Vice President, GTM Operations at Vercel",
+      "url": "https://boards.greenhouse.io/vercel/jobs/4436899004",
+      "mentioned_tools": [
+        "DocuSign"
+      ],
+      "is_migration": false,
+      "confidence": "Strong",
+      "confidence_score": 0.85,
+      "receipt": {
+        "source_url": "https://boards.greenhouse.io/vercel/jobs/4436899004",
+        "quote": "Fluency in other systems and sales tools, including CPQ, prospecting and data tools (Salesloft, ZoomInfo/RingLead, LinkedIn Sales Navigator, D&B), Sales Intelligence tools (Clari and Gong), and other tools that drive Sales/CS productivity (Docusign, etc.)",
+        "source_type": "ATS Job Posting",
+        "discovered_at": "2026-11-14 13:55:38"
+      }
+    },
+    {
+      "title": "Teramind - Law Clerk / Paralegal",
+      "url": "https://jobs.lever.co/teramind/8168f8dd-fe40-4d7e-885a-87375817ad0b",
+      "mentioned_tools": [],
+      "is_migration": false,
+      "confidence": "Strong",
+      "confidence_score": 0.85,
+      "receipt": {
+        "source_url": "https://jobs.lever.co/teramind/8168f8dd-fe40-4d7e-885a-87375817ad0b",
+        "quote": "About Teramind Teramind is a global leader in workforce analytics, insider threat detection, data loss prevention (DLP), and business process optimization. We help organizations of all sizes protect sensitive data, ensure compliance, and optimize wor",
+        "source_type": "ATS Job Posting",
+        "discovered_at": "2026-11-14 13:55:39"
+      }
+    },
+    {
+      "title": "Penta Group - Revenue Operations Manager",
+      "url": "https://jobs.lever.co/pentagrp/ef48217e-ced8-4ac1-b5fe-e12bf578ca6f",
+      "mentioned_tools": [],
+      "is_migration": false,
+      "confidence": "Strong",
+      "confidence_score": 0.85,
+      "receipt": {
+        "source_url": "https://jobs.lever.co/pentagrp/ef48217e-ced8-4ac1-b5fe-e12bf578ca6f",
+        "quote": "Role Summary The Revenue Operations Manager will be responsible for building the systems, processes, and reporting infrastructure that support our go-to-market teams. This role will maintain accurate pipeline visibility, deliver reliable revenue forecasts, and ensure leadership has the intelligence needed to make informed decisions.",
+        "source_type": "ATS Job Posting",
+        "discovered_at": "2026-11-14 13:55:39"
+      }
+    },
+    {
+      "title": "Teramind - Legal Counsel",
+      "url": "https://jobs.lever.co/teramind/8168f8dd-fe40-4d7e-885a-87375817ad0b?lever-source=Indeed",
+      "mentioned_tools": [],
+      "is_migration": false,
+      "confidence": "Strong",
+      "confidence_score": 0.85,
+      "receipt": {
+        "source_url": "https://jobs.lever.co/teramind/8168f8dd-fe40-4d7e-885a-87375817ad0b?lever-source=Indeed",
+        "quote": "About Teramind Teramind is a global leader in workforce analytics, insider threat detection, data loss prevention (DLP), and business process optimization. We help organizations of all sizes protect sensitive data, ensure compliance, and optimize wor",
+        "source_type": "ATS Job Posting",
+        "discovered_at": "2026-11-14 13:55:39"
+      }
+    },
+    {
+      "title": "Osmind - Revenue Operations Associate, Mexico",
+      "url": "https://jobs.lever.co/Osmind/eb33ac76-be88-4356-87e8-37e2d3c1e10d",
+      "mentioned_tools": [
+        "DocuSign"
+      ],
+      "is_migration": false,
+      "confidence": "Strong",
+      "confidence_score": 0.85,
+      "receipt": {
+        "source_url": "https://jobs.lever.co/Osmind/eb33ac76-be88-4356-87e8-37e2d3c1e10d",
+        "quote": "You will work in a modern stack (HubSpot, Gong, Cargo, Unify, Metabase, Stripe, DocuSign, Arrows, Pylon, Chameleon) and be expected to extend it with AI-native workflows from day one. You will have the AI tools you need, whether that is Claude, Cursor, Cargo, Zapier or Lovable.",
+        "source_type": "ATS Job Posting",
+        "discovered_at": "2026-11-14 13:55:39"
+      }
+    },
+    {
+      "title": "Sales Operations Analyst @ CUBE",
+      "url": "https://jobs.ashbyhq.com/CUBE/f5607613-6997-4a30-a6a5-e68daa890907",
+      "mentioned_tools": [
+        "DocuSign"
+      ],
+      "is_migration": false,
+      "confidence": "Strong",
+      "confidence_score": 0.85,
+      "receipt": {
+        "source_url": "https://jobs.ashbyhq.com/CUBE/f5607613-6997-4a30-a6a5-e68daa890907",
+        "quote": "- Help administer and optimise the wider RevOps tool stack, including Gong, Spiff, DocuSign CLM, ZoomInfo, Cognism, DemandFarm, and LinkedIn Sales Navigator, among other tools.",
+        "source_type": "ATS Job Posting",
+        "discovered_at": "2026-11-14 13:55:39"
+      }
+    },
+    {
+      "title": "Customer Success Operations Specialist @ Binti",
+      "url": "https://jobs.ashbyhq.com/binti/ee14e21a-b862-4563-8ff7-e22970ce4d9b",
+      "mentioned_tools": [
+        "DocuSign"
+      ],
+      "is_migration": false,
+      "confidence": "Strong",
+      "confidence_score": 0.85,
+      "receipt": {
+        "source_url": "https://jobs.ashbyhq.com/binti/ee14e21a-b862-4563-8ff7-e22970ce4d9b",
+        "quote": "Proficiency with Salesforce administration; experience with Maxio, Linksquares, and DocuSign/e-signature is a strong plus",
+        "source_type": "ATS Job Posting",
+        "discovered_at": "2026-11-14 13:55:39"
+      }
+    },
+    {
+      "title": "Senior Revenue Operations Manager @ Savvy Wealth",
+      "url": "https://jobs.ashbyhq.com/savvy/a19d1fc5-3e77-499e-958c-f37e58726ce9?embed=js",
+      "mentioned_tools": [],
+      "is_migration": false,
+      "confidence": "Strong",
+      "confidence_score": 0.85,
+      "receipt": {
+        "source_url": "https://jobs.ashbyhq.com/savvy/a19d1fc5-3e77-499e-958c-f37e58726ce9?embed=js",
+        "quote": "ABOUT SAVVY WEALTH: Wealth management is a $545 billion industry that still runs on manual work. 75% of advisors offer no digital communication beyond email, and most still build financial plans by hand in Excel. Savvy is reinventing what it looks li",
+        "source_type": "ATS Job Posting",
+        "discovered_at": "2026-11-14 13:55:39"
+      }
+    },
+    {
+      "title": "Revenue Strategy & Operations @ Savvy Wealth",
+      "url": "https://jobs.ashbyhq.com/savvy/a19d1fc5-3e77-499e-958c-f37e58726ce9",
+      "mentioned_tools": [],
+      "is_migration": false,
+      "confidence": "Strong",
+      "confidence_score": 0.85,
+      "receipt": {
+        "source_url": "https://jobs.ashbyhq.com/savvy/a19d1fc5-3e77-499e-958c-f37e58726ce9",
+        "quote": "ABOUT SAVVY WEALTH: Wealth management is a $545 billion industry that still runs on manual work. 75% of advisors offer no digital communication beyond email, and most still build financial plans by hand in Excel. Savvy is reinventing what it looks li",
+        "source_type": "ATS Job Posting",
+        "discovered_at": "2026-11-14 13:55:39"
+      }
+    },
+    {
+      "title": "Working at Pentagram",
+      "url": "https://www.pentagram.com/careers",
+      "mentioned_tools": [],
+      "is_migration": false,
+      "confidence": "Strong",
+      "confidence_score": 0.85,
+      "receipt": {
+        "source_url": "https://www.pentagram.com/careers",
+        "quote": "Every designer at Pentagram works on a team led by one of our partners. This means each gets the experience of working in a small, hands-on setting with access to the resources of a large, international firm \u00b7 The design teams are augmented by projec",
+        "source_type": "ATS Job Posting",
+        "discovered_at": "2026-11-14 13:55:40"
+      }
+    },
+    {
+      "title": "Careers Home | Docusign Careers",
+      "url": "https://careers.docusign.com/",
+      "mentioned_tools": [
+        "DocuSign"
+      ],
+      "is_migration": false,
+      "confidence": "Strong",
+      "confidence_score": 0.85,
+      "receipt": {
+        "source_url": "https://careers.docusign.com/",
+        "quote": "Careers Home | Docusign Careers",
+        "source_type": "ATS Job Posting",
+        "discovered_at": "2026-11-14 13:55:40"
+      }
+    },
+    {
+      "title": "Careers Home | Docusign Careers",
+      "url": "https://careers.docusign.com/careers-home/jobs",
+      "mentioned_tools": [
+        "DocuSign"
+      ],
+      "is_migration": false,
+      "confidence": "Strong",
+      "confidence_score": 0.85,
+      "receipt": {
+        "source_url": "https://careers.docusign.com/careers-home/jobs",
+        "quote": "careers-home Job Search - Jobs",
+        "source_type": "ATS Job Posting",
+        "discovered_at": "2026-11-14 13:55:40"
+      }
+    },
+    {
+      "title": "Job Searching? Check the Current Career Openings",
+      "url": "https://www.pandadoc.com/careers/",
+      "mentioned_tools": [
+        "PandaDoc"
+      ],
+      "is_migration": false,
+      "confidence": "Strong",
+      "confidence_score": 0.85,
+      "receipt": {
+        "source_url": "https://www.pandadoc.com/careers/",
+        "quote": "PandaDoc is hiring around the world! Come and help us to transform the way that the world works with documents.",
+        "source_type": "ATS Job Posting",
+        "discovered_at": "2026-11-14 13:55:40"
+      }
+    }
+  ],
+  "vendor_proofs": [],
+  "why_now": {
+    "target_company": "Pentagram",
+    "target_domain": "pentagram.com",
+    "competitor_stack": [
+      "DocuSign",
+      "PandaDoc"
+    ],
+    "trigger_summary": "Hiring Trigger: Pentagram recently posted roles referencing DocuSign, PandaDoc for sales and legal document execution.",
+    "target_persona": "Head of Operations / RevOps Director / Managing Partner",
+    "recommended_angle": "Position Terms.so as the frictionless, living-document alternative to DocuSign, PandaDoc, eliminating seat licensing overhead and agreement turnaround lag.",
+    "outbound_email": {
+      "subject": "Question regarding Pentagram's contract workflows & DocuSign",
+      "body": "Hi [First Name],\n\nI saw that Pentagram is actively expanding your team and managing agreements via DocuSign (spotted via your recent Jobs at PandaDoc).\n\nMost agencies and fast-scaling teams find that legacy PDF signing tools stall deal closings\u2014counterparties print, download, or get confused by rigid fields. With Terms.so, agreements live in living markdown documents: counterparties comment inline, negotiate in real-time, and sign with a typed signature with zero login friction.\n\nWould you be open to a 10-minute walk-through on how Pentagram can eliminate contract lag?\n\nBest regards,\n[Your Name]\n\n---\nReceipt proof: https://job-boards.greenhouse.io/pandadoc\nEvidence: \"The Future of Documents PandaDoc is the complete digital document solution, designed for efficiency. Create, send, track, and eSign document...\"",
+      "cited_receipt_url": "https://job-boards.greenhouse.io/pandadoc",
+      "cited_quote": "The Future of Documents PandaDoc is the complete digital document solution, designed for efficiency. Create, send, track, and eSign documents -- all from one intuitive and easy-to-use platform. Supercharge your CRM with our PandaDoc integrations. PandaDoc is an ideal platform for managing organizational documents including proposals, quotes, contracts, HR documents, and more."
+    }
+  }
+}

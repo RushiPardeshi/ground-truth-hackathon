@@ -14,7 +14,7 @@ interface Column { id: string; name: string; prompt: string; created_by: string 
 interface Cell { key: string; column_id: string; value: string; citations: { source: string; excerpts: string[] }[]; at: string; by: string; status: string }
 interface Scored { score: number; why: string[] }
 interface OrgTool { tool: string; evidence: string; source_url: string; source_type: string; date: string | null; confidence: Scored }
-interface OrgPerson { name: string; title: string; source_url: string; source_type: string; as_of: string | null; confidence: Scored }
+interface OrgPerson { name: string; title: string; city?: string | null; source_url: string; source_type: string; as_of: string | null; confidence: Scored }
 interface OrgTeam { region: string; team: string; tools: OrgTool[]; people: OrgPerson[] }
 interface OrgMapData { teams: OrgTeam[]; regions: string[]; sources: { url: string }[]; dropped: number; error?: string }
 interface Workspace { id: string; seller_name: string; seller_description: string; category_label: string; incumbents: string[] }
@@ -87,6 +87,8 @@ function Onboarding({ user, onDone, onCancel }: { user: string; onDone: () => vo
 function OrgPanel({ row, user, incumbents, onClose }: { row: Row; user: string; incumbents: string[]; onClose: () => void }) {
   const [data, setData] = useState<{ running: boolean; running_region: string | null; map: { at: string; by: string; data: OrgMapData } | null } | null>(null);
   const [newRegion, setNewRegion] = useState("");
+  const [regionFilter, setRegionFilter] = useState("All");
+  const [copied, setCopied] = useState(false);
   const url = `/api/accounts/${encodeURIComponent(row.key)}/orgmap`;
   const load = useCallback(() => fetch(url).then((r) => r.json()).then(setData), [url]);
   useEffect(() => { setData(null); load(); }, [load]);
@@ -98,14 +100,36 @@ function OrgPanel({ row, user, incumbents, onClose }: { row: Row; user: string; 
   const run = async (region?: string) => { await post(url, { user, region }); load(); };
   const addRegion = async () => {
     if (!newRegion.trim()) return;
-    await post(url, { user, region: newRegion.trim(), add_only: true });
-    setNewRegion(""); load();
+    const r = newRegion.trim();
+    await post(url, { user, region: r, add_only: true });
+    setNewRegion(""); setRegionFilter(r); load();
   };
   const map = data?.map?.data;
   const regions = [...new Set([...(map?.regions ?? []), ...(map?.teams ?? []).map((t) => t.region)])];
+  // Flatten to a call list: one row per person (deduped by name, best score kept).
+  const leadMap = new Map<string, OrgPerson & { region: string; team: string; teamTools: string[] }>();
+  for (const t of map?.teams ?? []) {
+    const teamTools = [...new Set(t.tools.map((x) => x.tool))];
+    for (const p of t.people) {
+      const k = p.name.toLowerCase();
+      const cur = leadMap.get(k);
+      if (!cur || p.confidence.score > cur.confidence.score) leadMap.set(k, { ...p, region: t.region, team: t.team, teamTools });
+    }
+  }
+  const leads = [...leadMap.values()]
+    .filter((l) => regionFilter === "All" || l.region === regionFilter)
+    .sort((a, b) => b.confidence.score - a.confidence.score);
+  const copyCsv = () => {
+    const esc = (v: string | null | undefined) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const lines = [["Company", "Region", "City", "Team", "Person", "Title", "Still in role (0-100)", "Team uses", "Source"].join(",")];
+    for (const l of leads) lines.push([row.company, l.region, l.city, l.team, l.name, l.title, String(l.confidence.score), l.teamTools.join("; "), l.source_url].map(esc).join(","));
+    navigator.clipboard.writeText(lines.join("\n")).then(() => setCopied(true));
+    setTimeout(() => setCopied(false), 1500);
+  };
+  const runningRegion = data?.running ? (data.running_region || "all regions") : null;
 
   return (
-    <aside className="fixed bottom-0 right-0 top-0 z-20 flex w-full max-w-[560px] flex-col border-l border-zinc-200 bg-white shadow-2xl">
+    <aside className="fixed bottom-0 right-0 top-0 z-20 flex w-full max-w-[760px] flex-col border-l border-zinc-200 bg-white shadow-2xl">
       <div className="flex items-start justify-between border-b border-zinc-200 p-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -115,78 +139,77 @@ function OrgPanel({ row, user, incumbents, onClose }: { row: Row; user: string; 
             {row.researched && <VerdictBadge verdict={row.verdict} score={row.score} />}
           </div>
           <div className="mt-0.5 text-xs text-zinc-500">{row.domain}{row.meta?.industry ? ` · ${row.meta.industry}` : ""}{row.meta?.size ? ` · ${row.meta.size}` : ""}{row.meta?.hq ? ` · ${row.meta.hq}` : ""}</div>
-          {row.meta?.why && <div className="mt-1 text-xs text-zinc-600">{row.meta.why}</div>}
+          {row.incumbents.length > 0 && <div className="mt-1 text-xs text-zinc-600">Runs: {row.incumbents.map((t) => t.tool).join(", ")}</div>}
         </div>
         <button onClick={onClose} className="text-xl leading-none text-zinc-400 hover:text-zinc-900">×</button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4">
         {!row.researched ? (
-          <p className="text-sm text-zinc-500">{row.research_status ? "Researching this company's incumbent stack live…" : "Run research on this row first. The org map builds on verified evidence."}</p>
+          <p className="text-sm text-zinc-500">{row.research_status ? "Researching this company's incumbent stack live…" : "Run research on this row first. Leads are found on top of verified evidence."}</p>
         ) : (
           <>
-            <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
-              <span>Regions → teams → incumbent tools ({incumbents.slice(0, 4).join(", ")}{incumbents.length > 4 ? "…" : ""}) & people</span>
-              {data?.map && <span>· built {ago(data.map.at)} by {data.map.by} · {map?.dropped ?? 0} uncited items dropped</span>}
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <span className="text-sm font-semibold text-zinc-900">People to call</span>
+              <span className="text-xs text-zinc-500">{leads.length} lead{leads.length === 1 ? "" : "s"}{data?.map ? ` · found ${ago(data.map.at)} by ${data.map.by} · ${map?.dropped ?? 0} uncited dropped` : ""}</span>
+              {leads.length > 0 && <button onClick={copyCsv} className="ml-auto rounded-md border border-zinc-300 px-2 py-1 text-xs hover:bg-zinc-50">{copied ? "Copied ✓" : "Copy CSV"}</button>}
             </div>
-            <div className="mb-4 flex flex-wrap gap-2">
-              <button onClick={() => run()} disabled={data?.running} className="rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50">
-                {data?.running && !data.running_region ? "Mapping all regions…" : map?.teams?.length ? "▷ Re-run all regions" : "▷ Map org (~$0.05)"}
-              </button>
-              <input value={newRegion} onChange={(e) => setNewRegion(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addRegion()} placeholder="+ add region (e.g. North America)" className="min-w-[180px] flex-1 rounded-md border border-zinc-300 px-2 py-1 text-xs" />
-              <button onClick={addRegion} className="rounded-md border border-zinc-300 px-2 py-1 text-xs hover:bg-zinc-50">Add</button>
-            </div>
-            <div className="mb-3 text-[10px] text-zinc-500">
-              <span className="rounded border border-zinc-200 px-1">0–100</span> next to a tool = confidence the team uses it · next to a person = confidence they&apos;re still in that role (hover for why)
-            </div>
-            {map?.error && <p className="mb-2 text-xs text-red-700">Last run failed: {map.error}</p>}
-            {data?.running && !map?.teams?.length && <div className="animate-pulse text-sm text-zinc-500">You.com Research is reading job posts, engineering blogs and public profiles…</div>}
-            {!data?.running && map && regions.length === 0 && <p className="text-sm text-zinc-500">No evidence found for teams or people.</p>}
 
-            <div className="space-y-3">
-              {regions.map((region) => {
-                const teams = (map?.teams ?? []).filter((t) => t.region === region);
-                const runningThis = data?.running && data.running_region?.toLowerCase() === region.toLowerCase();
-                return (
-                  <details key={region} open className="rounded-lg border border-zinc-200">
-                    <summary className="flex cursor-pointer select-none items-center gap-2 px-3 py-2 text-sm font-semibold text-zinc-900">
-                      🌐 {region} <span className="font-normal text-zinc-500">· {teams.length} team{teams.length === 1 ? "" : "s"}</span>
-                      <button onClick={(e) => { e.preventDefault(); run(region); }} disabled={data?.running} className="ml-auto rounded border border-zinc-300 px-1.5 py-0.5 text-[11px] font-normal hover:bg-zinc-50 disabled:opacity-50">{runningThis ? "running…" : "▷ Run region"}</button>
-                    </summary>
-                    <div className="space-y-2 px-3 pb-3">
-                      {teams.length === 0 && <p className="text-xs text-zinc-400">{runningThis ? "Searching this region…" : "No evidence found yet. Run this region."}</p>}
-                      {teams.map((t, i) => (
-                        <details key={i} open className="rounded-md bg-zinc-50">
-                          <summary className="cursor-pointer select-none px-2 py-1.5 text-sm font-medium text-zinc-800">👥 {t.team} <span className="font-normal text-zinc-500">· {t.tools.length} tools · {t.people.length} people</span></summary>
-                          <div className="space-y-2 px-2 pb-2">
-                            <div>
-                              <div className="text-[10px] uppercase tracking-wide text-zinc-500">Incumbent tools</div>
-                              {t.tools.length === 0 && <div className="text-xs text-zinc-400">No evidence found.</div>}
-                              {[...new Map([...t.tools].sort((a, b) => a.confidence.score - b.confidence.score).map((x) => [x.tool, x])).values()].sort((a, b) => b.confidence.score - a.confidence.score).map((x, j) => (
-                                <div key={j} className="mt-1 text-xs">
-                                  <span className="font-medium text-zinc-900">{x.tool}</span><Score s={x.confidence} label="Confidence this team uses it" />
-                                  <div className="text-zinc-600">“{x.evidence.replace(/^[“"']+|[”"']+$/g, "")}” <a href={x.source_url} target="_blank" rel="noreferrer" className="text-indigo-700 hover:underline">{host(x.source_url)} ↗</a> <span className="text-zinc-400">{x.source_type.replace("_", " ")}{x.date ? ` · ${x.date}` : ""}</span></div>
-                                </div>
-                              ))}
-                            </div>
-                            <div>
-                              <div className="text-[10px] uppercase tracking-wide text-zinc-500">People (public sources)</div>
-                              {t.people.length === 0 && <div className="text-xs text-zinc-400">No evidence found.</div>}
-                              {t.people.map((p, j) => (
-                                <div key={j} className="mt-1 text-xs">
-                                  <a href={p.source_url} target="_blank" rel="noreferrer" className="font-medium text-zinc-900 hover:underline">{p.name}</a><Score s={p.confidence} label="Confidence they're still in this role" />
-                                  <span className="text-zinc-500"> · {p.title} · </span><span className="text-zinc-400">{p.source_type.replace("_", " ")}{p.as_of ? ` · ${p.as_of}` : ""} · {host(p.source_url)}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </details>
-                      ))}
-                    </div>
-                  </details>
-                );
-              })}
+            <div className="mb-3 flex flex-wrap items-center gap-1.5">
+              {["All", ...regions].map((r) => (
+                <span key={r} className={`inline-flex items-center overflow-hidden rounded-md border text-xs ${regionFilter === r ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-300 text-zinc-700"}`}>
+                  <button onClick={() => setRegionFilter(r)} className="px-2 py-1">{r === "All" ? "All regions" : r}</button>
+                  <button
+                    onClick={() => run(r === "All" ? undefined : r)}
+                    disabled={!!data?.running}
+                    title={r === "All" ? "Find people in all regions (1 You.com Research call)" : `Find people in ${r} (1 You.com Research call)`}
+                    className={`border-l px-1.5 py-1 disabled:opacity-40 ${regionFilter === r ? "border-zinc-700" : "border-zinc-300 hover:bg-zinc-50"}`}
+                  >▷</button>
+                </span>
+              ))}
+              <input value={newRegion} onChange={(e) => setNewRegion(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addRegion()} placeholder="+ region (e.g. North America)" className="w-44 rounded-md border border-dashed border-zinc-300 px-2 py-1 text-xs" />
             </div>
+
+            {map?.error && <p className="mb-2 text-xs text-red-700">Last run failed: {map.error}</p>}
+            {runningRegion && <div className="mb-2 animate-pulse text-xs text-indigo-800">You.com Research is finding people in {runningRegion} (public profiles, talks, team pages)… 20–40s</div>}
+            {!map && !data?.running && <p className="text-sm text-zinc-500">Press ▷ on a region to find people to call (~$0.05 per run).</p>}
+
+            {leads.length > 0 ? (
+              <div className="overflow-x-auto rounded-lg border border-zinc-200">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-zinc-50 text-[11px] uppercase tracking-wide text-zinc-500">
+                    <tr>
+                      <th className="px-2 py-2 font-medium">City</th>
+                      <th className="px-2 py-2 font-medium">Team</th>
+                      <th className="px-2 py-2 font-medium">Person</th>
+                      <th className="px-2 py-2 font-medium">Title</th>
+                      <th className="px-2 py-2 font-medium" title="Confidence they're still in this role (from source type and how recent it is)">In role</th>
+                      <th className="px-2 py-2 font-medium">Source</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {leads.map((l) => (
+                      <tr key={l.name} className="border-t border-zinc-100 align-top hover:bg-zinc-50">
+                        <td className="px-2 py-1.5 text-zinc-700">{l.city ?? <span className="text-zinc-400">{l.region}</span>}</td>
+                        <td className="px-2 py-1.5 text-zinc-700" title={l.teamTools.length ? `Team uses: ${l.teamTools.join(", ")}` : ""}>
+                          {l.team}{l.teamTools.length > 0 && <span className="ml-1 text-[10px] text-zinc-400">({l.teamTools.slice(0, 2).join(", ")})</span>}
+                        </td>
+                        <td className="px-2 py-1.5"><a href={l.source_url} target="_blank" rel="noreferrer" className="font-medium text-zinc-900 hover:underline">{l.name}</a></td>
+                        <td className="px-2 py-1.5 text-zinc-600">{l.title}</td>
+                        <td className="px-2 py-1.5"><Score s={l.confidence} label="Confidence they're still in this role" /></td>
+                        <td className="px-2 py-1.5 text-zinc-500">
+                          <a href={l.source_url} target="_blank" rel="noreferrer" className="text-indigo-700 hover:underline">{host(l.source_url)} ↗</a>
+                          <div className="text-[10px] text-zinc-400">{l.source_type.replace("_", " ")}{l.as_of ? ` · ${l.as_of}` : ""}</div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : map && !data?.running ? (
+              <p className="text-sm text-zinc-500">No people found{regionFilter !== "All" ? ` in ${regionFilter}` : ""} yet. Press ▷ to search.</p>
+            ) : null}
+            <p className="mt-2 text-[10px] text-zinc-400">People come from public pages only; “In role” is 0–100 from source type and how recently the role was confirmed (hover a score). Verify before calling.</p>
           </>
         )}
       </div>
@@ -381,7 +404,7 @@ export default function Sheet() {
       </div>
 
       {/* chat bar */}
-      <div className={`fixed bottom-0 left-0 z-10 border-t border-zinc-200 bg-white/95 px-4 py-3 backdrop-blur ${openRow ? "right-[min(560px,100vw)]" : "right-0"}`}>
+      <div className={`fixed bottom-0 left-0 z-10 border-t border-zinc-200 bg-white/95 px-4 py-3 backdrop-blur ${openRow ? "right-[min(760px,100vw)]" : "right-0"}`}>
         {chat.length > 0 && (
           <div className="mb-2 max-h-32 space-y-1 overflow-y-auto text-xs">
             {chat.slice(-8).map((m, i) => (

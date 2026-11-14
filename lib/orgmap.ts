@@ -38,10 +38,11 @@ const SCHEMA = {
             items: {
               type: "object",
               properties: {
-                name: { type: "string" }, title: { type: "string" }, source_url: { type: ["string", "null"] },
+                name: { type: "string" }, title: { type: "string" }, city: { type: ["string", "null"] },
+                source_url: { type: ["string", "null"] },
                 source_type: { type: "string", enum: PERSON_SOURCES }, as_of: { type: ["string", "null"] },
               },
-              required: ["name", "title", "source_url", "source_type", "as_of"],
+              required: ["name", "title", "city", "source_url", "source_type", "as_of"],
               additionalProperties: false,
             },
           },
@@ -57,7 +58,7 @@ const SCHEMA = {
 
 export interface Scored { score: number; why: string[] }
 export interface OrgTool { tool: string; evidence: string; source_url: string; source_type: string; date: string | null; confidence: Scored }
-export interface OrgPerson { name: string; title: string; source_url: string; source_type: string; as_of: string | null; confidence: Scored }
+export interface OrgPerson { name: string; title: string; city: string | null; source_url: string; source_type: string; as_of: string | null; confidence: Scored }
 export interface OrgTeam { region: string; team: string; tools: OrgTool[]; people: OrgPerson[] }
 export interface OrgMap { teams: OrgTeam[]; regions: string[]; sources: { url: string; title?: string }[]; dropped: number; cost: number; error?: string }
 
@@ -128,13 +129,14 @@ async function buildOrgMap(key: string, user: string, region?: string) {
     .map((e) => `- ${e.tool} (${e.signal_type}, ${e.source_type}, ${e.date}): "${e.evidence_quote}" ${e.url}`)
     .join("\n");
   const input =
-    `Map ${snap.company} (${snap.domain})'s organization for a seller (${prof.seller}) whose buyers use these incumbent tools: ${incumbents.join(", ")}.\n` +
+    `Find sales leads at ${snap.company} (${snap.domain}) for a seller (${prof.seller}, ${prof.sellerDescription}) whose buyers run these incumbent tools: ${incumbents.join(", ")}.\n` +
     (region
-      ? `Focus ONLY on the ${region} region: offices, teams and people based in ${region}. Set region to "${region}" on every team.\n`
-      : `Group by region (e.g. "North America", "EMEA", "APAC", "India", or "Global" if unknown) and team (e.g. Platform, SRE, Data, Security, IT, Finance).\n`) +
-    `For each team list which of the incumbent tools above it uses, with a short verbatim evidence phrase, the source URL, the source type and the source's date (YYYY-MM or YYYY-MM-DD, null if unknown). ` +
-    `Also list publicly identifiable people on that team (leaders, engineers, admins, speakers, blog authors) with title, source URL, source type and the date their role was last confirmed (as_of).\n` +
-    `Use job posts (they name team and location), engineering blogs, conference talks and public profiles. Only include items you found a source for; use null source_url if none. Never invent people or tools.\n` +
+      ? `Focus ONLY on people based in the ${region} region. Set region to "${region}" on every team.\n`
+      : `Group by region (e.g. "North America", "EMEA", "APAC", "India", or "Global" if unknown).\n`) +
+    `The goal is a call list: publicly identifiable people (aim for 10-20) on the teams that would buy or use this kind of software: team leads, directors, VPs, heads of platform/infrastructure/SRE/IT/security/data, and senior practitioners who run those tools. ` +
+    `For each person give their current title, the CITY they are based in (null if unknown), the source URL (public profile, conference talk, engineering blog author page, team page, news), the source type, and the date their role was last confirmed (as_of, YYYY-MM or YYYY-MM-DD, null if unknown). Prefer people whose current role is confirmed in the last 12 months.\n` +
+    `Group people by team (e.g. Platform, SRE, Data, Security, IT). For each team also list which of the incumbent tools it uses, with a short verbatim evidence phrase, source URL, source type and date, so the seller knows why to call that team.\n` +
+    `Only include items you found a source for; use null source_url if none. Never invent people, titles or cities.\n` +
     `Already verified evidence:\n${known || "(none)"}`;
   const res = await fetch("https://api.you.com/v1/research", {
     method: "POST",

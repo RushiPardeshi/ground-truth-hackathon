@@ -162,7 +162,7 @@ function OrgPanel({ row, user, incumbents, onClose }: { row: Row; user: string; 
                             <div>
                               <div className="text-[10px] uppercase tracking-wide text-zinc-500">Incumbent tools</div>
                               {t.tools.length === 0 && <div className="text-xs text-zinc-400">No evidence found.</div>}
-                              {t.tools.map((x, j) => (
+                              {[...new Map([...t.tools].sort((a, b) => a.confidence.score - b.confidence.score).map((x) => [x.tool, x])).values()].sort((a, b) => b.confidence.score - a.confidence.score).map((x, j) => (
                                 <div key={j} className="mt-1 text-xs">
                                   <span className="font-medium text-zinc-900">{x.tool}</span><Score s={x.confidence} label="Confidence this team uses it" />
                                   <div className="text-zinc-600">“{x.evidence.replace(/^[“"']+|[”"']+$/g, "")}” <a href={x.source_url} target="_blank" rel="noreferrer" className="text-indigo-700 hover:underline">{host(x.source_url)} ↗</a> <span className="text-zinc-400">{x.source_type.replace("_", " ")}{x.date ? ` · ${x.date}` : ""}</span></div>

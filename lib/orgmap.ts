@@ -163,7 +163,18 @@ async function buildOrgMap(key: string, user: string, region?: string) {
       const people = t.people
         .filter((x) => (ok(x.source_url) && x.name.trim().split(/\s+/).length >= 2 ? true : (dropped++, false)))
         .map((x) => ({ ...x, source_url: x.source_url!, confidence: personConfidence(x) }));
-      return { region: region || t.region || "Global", team: t.team || "Engineering", tools, people };
+      // One entry per tool per team: keep the best-scored source, +5 per extra corroborating source.
+      const byTool = new Map<string, OrgTool>();
+      for (const x of tools) {
+        const cur = byTool.get(x.tool);
+        if (!cur) byTool.set(x.tool, x);
+        else {
+          const best = x.confidence.score > cur.confidence.score ? x : cur;
+          const score = Math.min(98, best.confidence.score + 5);
+          byTool.set(x.tool, { ...best, confidence: { score, why: [...best.confidence.why.filter((w) => !w.startsWith("corroborated")), "corroborated by another source: +5"] } });
+        }
+      }
+      return { region: region || t.region || "Global", team: t.team || "Engineering", tools: [...byTool.values()].sort((a, b) => b.confidence.score - a.confidence.score), people };
     })
     .filter((t) => t.tools.length || t.people.length);
 

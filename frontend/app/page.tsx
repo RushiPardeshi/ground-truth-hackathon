@@ -393,7 +393,7 @@ export default function Home() {
                 LIVE WIRE INTEL
               </span>
             </div>
-            <p className="text-xs text-slate-400">Sumble, but every claim has receipts • Powered by You.com</p>
+            <p className="text-xs text-slate-400">Account intelligence where every claim has receipts • Powered by You.com</p>
           </div>
         </div>
 

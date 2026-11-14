@@ -1,7 +1,7 @@
 #!/bin/bash
 # Runner script to start both FastAPI Backend and Next.js Frontend
 
-echo "🚀 Starting Receipts (Sumble on Live Wire)..."
+echo "🚀 Starting Receipts (Live Wire)..."
 
 # Trap CTRL+C to cleanly kill both processes
 trap 'kill 0' SIGINT

@@ -14,7 +14,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Receipts — Sumble, but every claim has receipts",
+  title: "Receipts — account intelligence where every claim has receipts",
   description: "Live on-demand B2B sales intelligence powered by You.com. Every tool, project, and hiring signal backed by clickable ground-truth receipts.",
 };
 

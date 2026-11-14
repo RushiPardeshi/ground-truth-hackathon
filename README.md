@@ -1,12 +1,12 @@
 # Receipts: Sales Intelligence on Live Wire
-> *"Sumble, but every claim has receipts."*
+> *"Account intelligence where every claim has receipts."*
 
 Built for the **Ground Truth Hackathon** using the **You.com Search & Contents APIs**.
 
 ---
 
 ## 💡 The Problem & Our Pitch
-Sumble charges $15k+/yr for a static database of 2.6M companies, but claims are opaque, often stale, and lack verifiable provenance. Outbound sales reps pitching five- and six-figure software cannot risk reaching out based on hallucinated or outdated data.
+Static technographic databases charge five figures a year for millions of company profiles, but claims are opaque, often stale, and lack verifiable provenance. Outbound sales reps pitching five- and six-figure software cannot risk reaching out based on hallucinated or outdated data.
 
 **Receipts** provides on-demand, real-time sales intelligence for **any target account**, where **100% of detected tools, migration triggers, and hiring signals are backed by clickable, verifiable receipts**:
 - 🟢 **Confirmed**: Direct client-side HTML `<script>` tags extracted via the You.com Contents API + Vendor Case Studies.

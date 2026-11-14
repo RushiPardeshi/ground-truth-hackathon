@@ -1,4 +1,4 @@
-# Project "Receipts" (Sumble on Live Wire)
+# Project "Receipts" (Live Wire)
 ## 2-Hour MVP Requirements Document & Execution Plan
 
 ---
@@ -6,8 +6,8 @@
 ## 1. Executive Summary & Hackathon Pitch
 
 - **Product Name**: **Receipts** (Sales Intelligence on Live Wire)
-- **Tagline**: *"Sumble, but every claim has receipts."*
-- **The Core Problem with Sumble**: Sumble offers a static database of 2.6M companies, but claims are opaque, often outdated, and lack verifiable provenance. Reps pitching six-figure software cannot risk reaching out based on hallucinated or stale intelligence.
+- **Tagline**: *"Account intelligence where every claim has receipts."*
+- **The Core Problem with static technographic databases**: They offer millions of company profiles, but claims are opaque, often outdated, and lack verifiable provenance. Reps pitching six-figure software cannot risk reaching out based on hallucinated or stale intelligence.
 - **Our Value Proposition**: On-demand, real-time sales intelligence for *any* target account. Every detected tool, infrastructure migration, and hiring trigger is backed by **verifiable ground truth**: direct website script tags, active ATS job postings, vendor customer case studies, and corporate filings.
 - **Why This Wins the Hackathon**:
   1. **Ground Truth First**: 100% of claims have clickable, highlighted evidence.
@@ -186,10 +186,10 @@ flowchart TD
 
 #### ⏱ 01:45 – 02:00 | Phase 5: Rehearsal & Judge Scorecard Alignment
 - Rehearse the 3-minute pitch:
-  1. *Hook (30s)*: Sumble charges $15k/yr for a stale database where you have to trust their word.
+  1. *Hook (30s)*: Static technographic databases charge five figures a year for stale data you have to take on trust.
   2. *Live Demo (90s)*: Type target -> instantly see script tags (100% hard proof) + active migration job postings + generated outreach email with clickable receipts.
   3. *Live Wire Moment (30s)*: Click "Check Again" -> live diff highlights a newly opened role.
-  4. *Close (30s)*: Sumble mapped the past; Receipts maps the present with verifiable proof.
+  4. *Close (30s)*: Static databases map the past; Receipts maps the present with verifiable proof.
 
 ---
 

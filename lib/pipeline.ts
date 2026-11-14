@@ -69,6 +69,12 @@ export async function resolveDomain(company: string, domainHint: string | undefi
 }
 
 // ---------- helpers ----------
+// What a page says about the watchlist (stable across cache vs live fetches).
+function toolFingerprint(text: string, watchlist: string[]): string {
+  const l = text.toLowerCase();
+  return "tools:" + watchlist.filter((w) => l.includes(w.toLowerCase())).sort().join(",");
+}
+
 function sha1(s: string) {
   return crypto.createHash("sha1").update(s).digest("hex");
 }
@@ -180,7 +186,7 @@ async function extractPages(
   await pool(pages, 6, async (p) => {
     const text = p.markdown || "";
     if (!text) return;
-    hashes[p.url] = sha1(text);
+    hashes[p.url] = toolFingerprint(text, watchlist);
     const lower = text.toLowerCase();
     if (!watchlist.some((w) => lower.includes(w.toLowerCase()))) {
       run.trace("extract", `skip (no watchlist tool mentioned): ${p.url}`);
@@ -476,8 +482,13 @@ async function runWatch(run: Run, key: string, user: string) {
     const text = p?.markdown ?? "";
     if (!p || !text || /no longer (accepting|available)|job (has been )?(closed|filled)|page not found|404/i.test(text.slice(0, 3000))) {
       changes.push(mk("removed_posting", `Job posting appears removed or closed`, u));
-    } else if (prev.page_hashes[u] && prev.page_hashes[u] !== sha1(text)) {
-      changes.push(mk("changed_text", `Job posting text changed`, u));
+    } else if (prev.page_hashes[u]?.startsWith("tools:")) {
+      const before = new Set(prev.page_hashes[u].slice(6).split(",").filter(Boolean));
+      const after = new Set(toolFingerprint(text, watchlist).slice(6).split(",").filter(Boolean));
+      const added = [...after].filter((t) => !before.has(t));
+      const removed = [...before].filter((t) => !after.has(t));
+      if (added.length || removed.length)
+        changes.push(mk("changed_text", `Job post ${added.length ? `now mentions ${added.join(", ")}` : ""}${added.length && removed.length ? "; " : ""}${removed.length ? `no longer mentions ${removed.join(", ")}` : ""}`, u));
     }
   }
 
@@ -515,7 +526,7 @@ async function runWatch(run: Run, key: string, user: string) {
   const snap: Snapshot = {
     ...prev, evidence: merged, ...r, ...s, brief,
     created_at: now, created_by: user,
-    page_hashes: { ...prev.page_hashes, ...ex.hashes, ...Object.fromEntries(rechecked.filter((p) => p.markdown).map((p) => [p.url, sha1(p.markdown!)])) },
+    page_hashes: { ...prev.page_hashes, ...ex.hashes, ...Object.fromEntries(rechecked.filter((p) => p.markdown).map((p) => [p.url, toolFingerprint(p.markdown!, watchlist)])) },
     seen_urls: [...new Set([...prev.seen_urls, ...fresh.map((x) => x.url)])],
     cost: run.state.cost,
     calls: run.state.calls.filter((c) => c.api !== "llm" && c.api !== "http").length,

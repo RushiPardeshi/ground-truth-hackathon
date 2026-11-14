@@ -12,8 +12,9 @@ Tripwire tells a seller **which incumbent tools a target company runs today, whi
 2. **Shared sheet:** one row per company. Columns: Company · **Incumbent stack** (each chip links to its receipt; dot = Confirmed / Strong / Inferred) · **Relevance** 0–100 · Evidence · Why they fit · Refreshed · your **AI columns**. The incumbent list is editable in the header.
 3. **AI columns:** "+ Add column" with a prompt (e.g. *Which cloud provider does {company} run on?*). Every cell is answered by the **You.com Answer API** with citations. Columns can be edited (✎ re-runs them) or re-run (▷).
 4. **Click a company → right-hand panel:** regions → teams → **incumbent tools each team uses**, each with a **0–100 confidence that the team uses it**, plus **people on that team** with a **0–100 confidence they're still in that role**. Scores are computed deterministically from source type and age (hover to see why), not asserted by a model. **Add a region** (e.g. "North America") and **▷ Run region** to research just that region; results merge into the map. Nodes whose source isn't among Research's returned sources are dropped.
-5. **Chat bar:** `add OpenAI, Anthropic` adds rows and researches them; `add column Cloud: Which cloud does {company} run on?` adds a column; anything else (`find 5 fintech companies like Stripe`) asks You.com Research for more matching clients.
-6. **Monthly refresh:** a server scheduler runs a You.com watch pass on every row whose last check is older than 30 days (`TRIPWIRE_REFRESH_DAYS`), adds new evidence, job posts and removed postings, and re-scores.
+5. **Reverse discovery ("who's hiring for Splunk?"):** `discover Splunk` in the chat (or `npm run research -- discover "Splunk"`, or the `discover_accounts` MCP tool) searches Greenhouse, Lever and Ashby job posts through **You.com Search** with query-level `site:` targeting, groups the postings by company slug, then **verifies each posting against that ATS's public, keyless job-board API** (`boards-api.greenhouse.io`, `api.lever.co/v0/postings`, `api.ashbyhq.com/posting-api`). A posting counts as verified only if it is still live and its full description names the tool, and the quote shown is copied straight from that description. Verified companies become rows and get researched.
+6. **Chat bar:** `add OpenAI, Anthropic` adds rows and researches them; `add column Cloud: Which cloud does {company} run on?` adds a column; anything else (`find 5 fintech companies like Stripe`) asks You.com Research for more matching clients.
+7. **Monthly refresh:** a server scheduler runs a You.com watch pass on every row whose last check is older than 30 days (`TRIPWIRE_REFRESH_DAYS`), adds new evidence, job posts and removed postings, and re-scores.
 
 ![Account page](docs/account.png)
 
@@ -53,7 +54,7 @@ company + domain + watchlist
 
 | Endpoint | Powers |
 |---|---|
-| **Web Search** `POST ydc-index.io/v1/search` | Discovery: `include_domains` for ATS boards (Greenhouse, Lever, Ashby, Workday), vendor sites and the company's own site; `freshness: month/week` for recent signals and watch mode; domain resolution for company names |
+| **Web Search** `POST ydc-index.io/v1/search` | Discovery (incl. reverse ATS discovery with `site:boards.greenhouse.io OR site:jobs.lever.co OR site:jobs.ashbyhq.com`): `include_domains` for ATS boards (Greenhouse, Lever, Ashby, Workday), vendor sites and the company's own site; `freshness: month/week` for recent signals and watch mode; domain resolution for company names |
 | **Contents** `POST ydc-index.io/v1/contents` | Full pages as Markdown for extraction; homepage as **HTML** for script detection (falls back to a plain fetch only if no `<script>` tags come back); `max_age: 0` live re-reads in watch mode |
 | **Research** `POST api.you.com/v1/research` (`research_effort: standard`) | Onboarding (seller → incumbent stack + 10 ideal clients), chat "find more clients", the **org map** (regions → teams → tools & people, per-region runs), all via `output_schema`; cited "why now" brief per account |
 | **Answer** `POST api.you.com/v1/answer` | AI prompt columns in the sheet (one cited answer per cell); quick cited check on the top conflict |
@@ -66,8 +67,8 @@ Every call is timed, cost-estimated at list price, capped per run (15 searches, 
 
 Tripwire is built to be driven by other agents, e.g. parallel coding agents coordinated through an OpenCrawl board, as well as by humans. Agents and humans share one database, one ownership model and one cost log. See [AGENTS.md](AGENTS.md).
 
-- **MCP server** (`.mcp.json` included): `research_account`, `check_for_changes`, `get_account`, `list_accounts`, `add_rows`, `add_prompt_column`, `get_sheet`, `map_org`
-- **CLI:** `npm run research -- "Anaplan" anaplan.com` → evidence JSON on stdout, trace on stderr
+- **MCP server** (`.mcp.json` included): `research_account`, `check_for_changes`, `get_account`, `list_accounts`, `add_rows`, `add_prompt_column`, `get_sheet`, `map_org`, `discover_accounts`
+- **CLI:** `npm run research -- "Anaplan" anaplan.com` → evidence JSON on stdout, trace on stderr; `npm run research -- discover "Splunk"` → companies hiring for Splunk with verified job links
 - **HTTP:** `POST /api/research`, `GET /api/runs/:id`, `GET /api/accounts`, `GET /api/accounts/:key`, `POST /api/accounts/:key/check`
 
 ## Setup

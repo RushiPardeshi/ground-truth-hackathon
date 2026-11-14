@@ -392,7 +392,7 @@ export default function Sheet() {
           </div>
         )}
         <div className="flex gap-2">
-          <input value={msg} onChange={(e) => setMsg(e.target.value)} onKeyDown={(e) => e.key === "Enter" && !chatBusy && send()} placeholder='Try: "add OpenAI, Anthropic" · "find 5 fintech companies like Stripe" · "add column Cloud: Which cloud does {company} run on?"' className="flex-1 rounded-lg border border-zinc-300 px-3 py-2 text-sm" />
+          <input value={msg} onChange={(e) => setMsg(e.target.value)} onKeyDown={(e) => e.key === "Enter" && !chatBusy && send()} placeholder='Try: "discover Splunk" · "add OpenAI, Anthropic" · "find 5 fintechs like Stripe" · "add column Cloud: Which cloud does {company} run on?"' className="flex-1 rounded-lg border border-zinc-300 px-3 py-2 text-sm" />
           <button onClick={send} disabled={chatBusy} className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50">Send</button>
         </div>
       </div>

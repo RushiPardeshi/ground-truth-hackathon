@@ -1,13 +1,26 @@
 // Usage: npm run research -- "Company" [domain] [user]
+//        npm run research -- watch <domain> [user]
+//        npm run research -- discover "<tool>" [limit]
 // Runs the full pipeline once and prints evidence JSON. Also usable by any coding agent.
-import { resolveDomain, runs, startResearch, startWatch, accountKey } from "../lib/pipeline";
+import { resolveDomain, runs, startResearch, startWatch, accountKey, discoverAccounts } from "../lib/pipeline";
 
 async function main() {
   const [cmd, ...rest] = process.argv.slice(2);
+  if (cmd === "discover") {
+    const tool = rest[0];
+    if (!tool) {
+      console.error('usage: npm run research -- discover "<tool>" [limit]');
+      process.exit(1);
+    }
+    const accounts = await discoverAccounts({ tool, limit: Number(rest[1] || 15), onProgress: (m) => console.error(`[discover] ${m}`) });
+    console.error(`[discover] ${accounts.length} accounts · ${accounts.filter((a) => a.verified_count).length} verified against the live ATS posting`);
+    console.log(JSON.stringify({ tool, accounts }, null, 2));
+    return;
+  }
   const isWatch = cmd === "watch";
   const company = isWatch ? rest[0] : cmd;
   if (!company) {
-    console.error('usage: npm run research -- "Company" [domain] [user]\n       npm run research -- watch <domain> [user]');
+    console.error('usage: npm run research -- "Company" [domain] [user]\n       npm run research -- watch <domain> [user]\n       npm run research -- discover "<tool>" [limit]');
     process.exit(1);
   }
   const user = (isWatch ? rest[1] : rest[1]) || "cli";

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createColumn, runColumn } from "@/lib/columns";
 import { getAccount, upsertAccount } from "@/lib/db";
-import { accountKey, enqueueResearch, normalizeDomain, resolveDomain } from "@/lib/pipeline";
+import { accountKey, discoverAccounts, enqueueResearch, normalizeDomain, resolveDomain } from "@/lib/pipeline";
 import { activeWorkspaceId, discoverClients, getWorkspace } from "@/lib/workspace";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +24,26 @@ export async function POST(req: Request) {
     const c = createColumn(col[1].trim(), col[2].trim(), user);
     const n = runColumn(c, user);
     return NextResponse.json({ reply: `Added column “${c.name}”. Asking You.com for ${n} rows (cited answers).` });
+  }
+
+  // "discover Splunk" / "who uses Dynatrace" / "companies hiring for New Relic" → ATS job-board discovery
+  const disc = text.match(/^(?:discover|who uses|who's hiring for|whos hiring for|companies (?:using|hiring for|that use))\s+(.+?)\??$/i);
+  if (disc) {
+    const tool = disc[1].trim();
+    const accounts = await discoverAccounts({ tool, limit: 12 });
+    const verified = accounts.filter((a) => a.verified_count > 0).slice(0, 8);
+    const keys: string[] = [];
+    for (const a of verified) {
+      try {
+        const { domain } = await resolveDomain(a.company, undefined);
+        const key = accountKey(domain, wsId);
+        const job = a.sample_jobs.find((j) => j.verified);
+        if (!getAccount(key)) upsertAccount({ key, company: a.company, domain, category: wsId, owner: user, claimed_at: new Date().toISOString(), meta: JSON.stringify({ industry: `${a.ats} · ${a.job_count} posts`, hq: job?.location ?? null, size: null, why: `Hiring: “${job?.title}” names ${tool}: “${job?.quote?.slice(0, 120)}”` }) });
+        keys.push(key);
+      } catch {}
+    }
+    enqueueResearch(keys, user);
+    return NextResponse.json({ reply: `Found ${accounts.length} companies on Greenhouse/Lever/Ashby mentioning ${tool}; ${verified.length} verified against the live posting. Added ${keys.length} as rows: ${verified.map((a) => a.company).slice(0, keys.length).join(", ")}.`, added: keys });
   }
 
   const add = text.match(/^(?:add|track|research)\s+(.+)$/i);

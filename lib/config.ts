@@ -49,6 +49,7 @@ export const JOB_DOMAINS = [
   "job-boards.greenhouse.io",
   "jobs.lever.co",
   "jobs.ashbyhq.com",
+  "ashbyhq.com",
   "myworkdayjobs.com",
 ];
 

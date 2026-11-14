@@ -83,8 +83,16 @@ function isoDate(s?: string | null): string | null {
   return isFinite(d.getTime()) ? d.toISOString().slice(0, 10) : null;
 }
 
+const ATS_SITES = "site:boards.greenhouse.io OR site:job-boards.greenhouse.io OR site:jobs.ashbyhq.com OR site:jobs.lever.co OR site:myworkdayjobs.com";
+
+export function isAtsUrl(url: string): boolean {
+  const h = hostOf(url);
+  return JOB_DOMAINS.some((j) => h === j || h.endsWith("." + j)) || /greenhouse\.io|ashbyhq\.com|lever\.co|myworkdayjobs\.com/.test(h);
+}
+
 function guessSource(url: string, domain: string, cat: CategoryPreset): Evidence["source_type"] {
   const h = hostOf(url);
+  if (isAtsUrl(url)) return "job_post";
   if (/\/blog\/|engineering\.|\/engineering\//.test(url) && !JOB_DOMAINS.some((j) => h.endsWith(j))) return "eng_blog";
   if (JOB_DOMAINS.some((j) => h.endsWith(j)) || /careers|jobs|\/job\//.test(url)) return "job_post";
   if (Object.values(cat.vendorDomains).some((v) => h.endsWith(v))) return "vendor_case_study";
@@ -222,7 +230,8 @@ async function extractPages(
           continue;
         }
         const tool = canonicalTool(it.tool, watchlist);
-        const source = it.source_type === "other" ? guessSource(p.url, domain, cat) : it.source_type;
+        const guessed = guessSource(p.url, domain, cat);
+        const source = isAtsUrl(p.url) ? "job_post" : it.source_type === "other" ? guessed : it.source_type;
         const urlYear = p.url.match(/\/(20[0-2]\d)\//)?.[1];
         const pub = isoDate(it.published_date) || isoDate(p.page_age) || (urlYear ? `${urlYear}-01-01` : null);
         const date = pub || today;
@@ -255,20 +264,20 @@ async function extractPages(
 }
 
 function buildQueries(company: string, domain: string, cat: CategoryPreset, watchlist: string[]) {
-  const q = (s: string) => `"${company}"`.length > 0 ? s : s;
   const inc = watchlist.filter((t) => cat.incumbents.includes(t));
   const chal = watchlist.filter((t) => !cat.incumbents.includes(t));
   const orList = (xs: string[]) => xs.map((x) => (x.includes(" ") ? `"${x}"` : x)).join(" OR ");
   const vendorDomains = watchlist.map((t) => cat.vendorDomains[t]).filter(Boolean);
   return [
-    { label: "Job boards (ATS)", query: q(`${company} engineer ${orList(watchlist)}`), opts: { include_domains: JOB_DOMAINS, count: 15 } },
-    { label: "Careers × incumbents", query: `"${company}" careers job ${orList(inc)}`, opts: { count: 10 } },
+    // Query-level ATS targeting (include_domains alone misses third-level ATS subdomains).
+    { label: "Job boards (ATS)", query: `"${company}" (${orList(watchlist)}) (${ATS_SITES} OR "careers")`, opts: { count: 15 } },
+    { label: "Careers × incumbents", query: `"${company}" careers job (${orList(inc)})`, opts: { count: 10 } },
     ...(chal.length ? [{ label: "Careers × other tools", query: `"${company}" careers job ${orList(chal)}`, opts: { count: 10 } }] : []),
-    { label: "Migration language", query: `"${company}" migrate from ${orList(inc)}`, opts: { count: 10 } },
+    { label: "Migration language", query: `"${company}" migrate from (${orList(inc)})`, opts: { count: 10 } },
     { label: "Vendor case studies", query: `"${company}" customer story`, opts: { include_domains: vendorDomains, count: 10 } },
-    { label: "Company site", query: `${orList(watchlist)} ${cat.keywords[0]}`, opts: { include_domains: [domain], count: 10 } },
+    { label: "Company site", query: `(${orList(watchlist)}) ${cat.keywords[0]}`, opts: { include_domains: [domain], count: 10 } },
     { label: "Engineering blog", query: `"${company}" engineering blog ${cat.keywords.join(" ")}`, opts: { count: 10 } },
-    { label: "Recent news (month)", query: `"${company}" ${orList(watchlist)}`, opts: { freshness: "month", count: 10 } },
+    { label: "Recent news (month)", query: `"${company}" (${orList(watchlist)})`, opts: { freshness: "month", count: 10 } },
   ];
 }
 
@@ -458,9 +467,9 @@ async function runWatch(run: Run, key: string, user: string) {
   run.trace("watch", `Lightweight pass since ${prev.created_at}`);
 
   const qs = [
-    { query: `${company} ${orList}`, opts: { include_domains: JOB_DOMAINS, freshness: "week", count: 10 } },
-    { query: `"${company}" job ${orList}`, opts: { freshness: "week", count: 10 } },
-    { query: `"${company}" ${orList} ${cat.keywords[0]}`, opts: { freshness: "week", count: 10 } },
+    { query: `"${company}" (${orList}) (${ATS_SITES} OR "careers")`, opts: { freshness: "week", count: 10 } },
+    { query: `"${company}" job (${orList})`, opts: { freshness: "week", count: 10 } },
+    { query: `"${company}" (${orList}) ${cat.keywords[0]}`, opts: { freshness: "week", count: 10 } },
   ];
   const res = (await Promise.all(qs.map((q) => search(run, q.query, q.opts)))).flat();
   const seen = new Set(prev.seen_urls);
@@ -567,3 +576,5 @@ function pump() {
     }, 1000);
   }
 }
+
+export { discoverAccounts, parseAtsUrl, fetchAtsJob, type DiscoveredAccount, type DiscoveredJob, type Ats } from "./discover";

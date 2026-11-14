@@ -180,4 +180,30 @@ server.registerTool(
   }
 );
 
+server.registerTool(
+  "discover_accounts",
+  {
+    description: "Find companies actively hiring on Greenhouse, Ashby, and Lever that mention an incumbent tool (e.g. Splunk, Dynatrace) in their engineering job descriptions.",
+    inputSchema: {
+      tool: z.string().describe("Incumbent tool name, e.g. 'Splunk'"),
+      limit: z.number().default(15),
+      add_rows: z.boolean().default(false).describe("Also add verified accounts to the shared sheet and research them"),
+      user: z.string().optional(),
+    },
+  },
+  async ({ tool, limit, add_rows, user }) => {
+    const d = await api("/api/discover", { method: "POST", body: JSON.stringify({ tool, limit, add_rows, user: user || AGENT_USER }) });
+    if (d.error) return text(d);
+    return text({
+      tool,
+      note: "verified = posting is live on the ATS public API and its description names the tool (quote is verbatim). Unverified = matched in search only.",
+      added_rows: d.added,
+      accounts: d.accounts.map((a: any) => ({
+        company: a.company, ats: a.ats, job_count: a.job_count, verified_count: a.verified_count,
+        jobs: a.sample_jobs.map((j: any) => ({ title: j.title, url: j.url, status: j.status, location: j.location, quote: j.quote })),
+      })),
+    });
+  }
+);
+
 await server.connect(new StdioServerTransport());

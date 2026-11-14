@@ -20,6 +20,7 @@ claude mcp add tripwire --env TRIPWIRE_URL=http://localhost:3000 --env TRIPWIRE_
 | `add_prompt_column({name, prompt, user?})` | New AI column; every row answered by You.com Answer with citations (`{company}`, `{domain}` placeholders) | ~$0.005 per cell |
 | `get_sheet()` | Whole sheet: rows, scores, stacks, prompt columns and cited cells | $0 |
 | `map_org({account_key, refresh?})` | Regions → teams → tools & people, every node with a source URL | ~$0.05 |
+| `discover_accounts({tool, limit?, add_rows?})` | Companies hiring on Greenhouse/Ashby/Lever whose engineering postings name the tool; each posting checked against the ATS public API (`verified` / `live_no_mention` / `closed_or_unreachable`) | ~$0.015 (3 searches); ATS APIs are free |
 
 Set `TRIPWIRE_USER` to a distinct name per agent (e.g. `agent-backend`, `agent-sdr`) so the team table and change feed show who did what.
 
@@ -28,6 +29,7 @@ Set `TRIPWIRE_USER` to a distinct name per agent (e.g. `agent-backend`, `agent-s
 ```bash
 npm run research -- "Anaplan" anaplan.com agent-1   # JSON to stdout, live trace to stderr
 npm run research -- watch anaplan.com agent-1       # watch pass
+npm run research -- discover "Splunk" 15            # who's hiring for Splunk (verified job links)
 ```
 
 ## HTTP

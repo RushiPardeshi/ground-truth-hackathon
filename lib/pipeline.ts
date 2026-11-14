@@ -1,10 +1,7 @@
 import crypto from "crypto";
 import { CAPS, JOB_DOMAINS, SCRIPT_SIGNATURES, getCategory, type CategoryPreset } from "./config";
 import { addChanges, getAccount, getAlias, latestSnapshot, saveSnapshot, setAlias, upsertAccount } from "./db";
-import { extractFromPage, normalizeText, quoteAppears, relevantWindows, ruleExtract, type ExtractedItem } from "./llm";
-
-// Once the LLM fails auth, stop calling it for this process (re-checked on restart).
-const llmState = { down: !process.env.ANTHROPIC_API_KEY };
+import { extractFromPage, markAnthropicDown, normalizeText, pickProvider, quoteAppears, relevantWindows, ruleExtract, type ExtractedItem, type Provider } from "./llm";
 import { canonicalTool, confidenceFor, hostOf, isStale, reconcile, score } from "./reconcile";
 import type { ApiCallLog, ChangeItem, Evidence, RunState, Snapshot, TraceEvent } from "./types";
 import { answer, contents, research, search, type CallSink, type PageContent, type SearchResult } from "./you";
@@ -183,6 +180,8 @@ async function extractPages(
   let tokens = 0;
   const hashes: Record<string, string> = {};
   const all: Evidence[] = [];
+  let provider: Provider = await pickProvider();
+  run.trace("extract", provider.kind === "rules" ? `Extractor: rule-based, verbatim sentences only (${provider.reason})` : `Extractor: ${provider.kind === "you" ? "You.com Inference Router" : "Anthropic"} · ${provider.model}`);
   await pool(pages, 6, async (p) => {
     const text = p.markdown || "";
     if (!text) return;
@@ -196,19 +195,20 @@ async function extractPages(
     const t0 = Date.now();
     try {
       let items: ExtractedItem[];
-      if (llmState.down) {
+      if (provider.kind === "rules") {
         items = ruleExtract(windows, company, watchlist, guessSource(p.url, domain, cat) === "job_post", `${p.title ?? ""} ${p.url}`);
       } else {
         try {
-          const r = await extractFromPage({ company, domain, tools: watchlist, url: p.url, title: p.title, text: windows });
+          const r = await extractFromPage({ company, domain, tools: watchlist, url: p.url, title: p.title, text: windows, provider });
           items = r.items;
           tokens += r.tokens;
-          run.state.calls.push({ api: "llm", ms: Date.now() - t0, cost: 0, ok: true, note: p.url, tokens: r.tokens });
+          run.state.calls.push({ api: "llm", ms: Date.now() - t0, cost: 0, ok: true, note: `${provider.kind}:${provider.model} ${p.url}`, tokens: r.tokens });
         } catch (err) {
           const msg = (err as Error).message;
-          if (/401|403|authentication|api[- ]key|credit|402/i.test(msg)) {
-            if (!llmState.down) run.trace("error", `LLM unavailable (${msg.slice(0, 80)}). Switching to rule-based extraction (verbatim sentences only).`);
-            llmState.down = true;
+          if (/401|403|402|authentication|api[- ]key|credit/i.test(msg)) {
+            if (provider.kind === "anthropic") markAnthropicDown();
+            run.trace("error", `${provider.kind} LLM unavailable (${msg.slice(0, 80)}). Switching to rule-based extraction (verbatim sentences only).`);
+            provider = { kind: "rules", reason: msg.slice(0, 80) };
           } else run.trace("error", `LLM failed on ${p.url}: ${msg.slice(0, 120)}; using rule-based extraction for this page`);
           items = ruleExtract(windows, company, watchlist, guessSource(p.url, domain, cat) === "job_post", `${p.title ?? ""} ${p.url}`);
         }
@@ -370,7 +370,7 @@ async function runResearch(run: Run, args: StartArgs & { domain: string }) {
   // 5. Extract (LLM) + verify quotes
   const ageByUrl = new Map(relevant.map((r) => [r.url, r.page_age]));
   const pages = pageBatches.flat().map((p) => ({ ...p, page_age: ageByUrl.get(p.url) }));
-  run.trace("extract", `Extracting from ${pages.length} pages with ${process.env.TRIPWIRE_LLM_MODEL || "claude-opus-5-5"}`);
+  run.trace("extract", `Extracting from ${pages.length} pages`);
   const ex = await extractPages(run, pages, company, domain, cat, watchlist, push);
   run.trace("extract", `Anti-hallucination check: ${ex.dropped} items dropped (quote not found verbatim, or not about ${company})`);
   P.dropped = ex.dropped;

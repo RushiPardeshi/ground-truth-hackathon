@@ -1,6 +1,6 @@
-// LLM extraction. The You.com Inference Router needs purchased credits on this key (402),
-// so extraction runs on the Anthropic API. Output is schema-constrained, then every quote
-// is checked against the page text; anything not found verbatim is dropped.
+// LLM extraction. Provider order: You.com Inference Router (same YDC key) → Anthropic API →
+// rule-based (no LLM). Whatever produces the JSON, every quote is then checked against the
+// page text and anything not found verbatim is dropped.
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
@@ -23,6 +23,88 @@ function anthropic() {
   return client;
 }
 
+// ---------- provider selection ----------
+export type Provider = { kind: "you"; model: string } | { kind: "anthropic"; model: string } | { kind: "rules"; reason: string };
+const YOU_PREFERRED = ["kimi-k3", "muse-spark-1.3"];
+let cached: { at: number; p: Provider } | null = null;
+let anthropicDown = false;
+
+export function markAnthropicDown() {
+  anthropicDown = true;
+  cached = null;
+}
+
+export async function pickProvider(): Promise<Provider> {
+  if (cached && Date.now() - cached.at < 5 * 60_000) return cached.p;
+  let reason = "";
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 8000);
+    const r = await fetch("https://api.you.com/v1/models", { headers: { Authorization: `Bearer ${process.env.YDC_API_KEY}` }, signal: ctrl.signal });
+    clearTimeout(t);
+    const body = await r.json().catch(() => ({}));
+    if (r.ok && Array.isArray(body.data) && body.data.length) {
+      const ids: string[] = body.data.map((m: { id: string }) => m.id);
+      const model = process.env.TRIPWIRE_YOU_MODEL && ids.includes(process.env.TRIPWIRE_YOU_MODEL) ? process.env.TRIPWIRE_YOU_MODEL : YOU_PREFERRED.find((m) => ids.includes(m)) ?? ids[0];
+      cached = { at: Date.now(), p: { kind: "you", model } };
+      return cached.p;
+    }
+    reason = `You.com Inference Router ${r.status}: ${body?.error?.message ?? "unavailable"}`;
+  } catch (e) {
+    reason = `You.com Inference Router unreachable: ${(e as Error).message}`;
+  }
+  const p: Provider = process.env.ANTHROPIC_API_KEY && !anthropicDown ? { kind: "anthropic", model: LLM_MODEL } : { kind: "rules", reason: reason + (anthropicDown ? "; Anthropic key rejected" : "; no Anthropic key") };
+  cached = { at: Date.now(), p };
+  return p;
+}
+
+function firstJsonObject(s: string): unknown {
+  const start = s.indexOf("{");
+  if (start < 0) return null;
+  let depth = 0, inStr = false, esc = false;
+  for (let i = start; i < s.length; i++) {
+    const c = s[i];
+    if (inStr) { if (esc) esc = false; else if (c === "\\") esc = true; else if (c === '"') inStr = false; continue; }
+    if (c === '"') inStr = true;
+    else if (c === "{") depth++;
+    else if (c === "}" && --depth === 0) {
+      try { return JSON.parse(s.slice(start, i + 1)); } catch { return null; }
+    }
+  }
+  return null;
+}
+
+async function viaYou(model: string, prompt: string): Promise<{ items: ExtractedItem[]; tokens: number }> {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 60_000);
+  try {
+    const r = await fetch("https://api.you.com/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${process.env.YDC_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model,
+        max_tokens: 4000,
+        messages: [
+          { role: "system", content: 'Reply with only a JSON object: {"items": [...]} matching the requested fields. No prose, no code fences.' },
+          { role: "user", content: prompt },
+        ],
+      }),
+      signal: ctrl.signal,
+    });
+    const body = await r.json();
+    if (!r.ok) throw new Error(`${r.status} ${body?.error?.message ?? ""}`);
+    const text: string = body.choices?.[0]?.message?.content ?? "";
+    const parsed = OutSchema.safeParse(firstJsonObject(text));
+    const tokens = (body.usage?.prompt_tokens ?? 0) + (body.usage?.completion_tokens ?? 0);
+    // Validate item by item so one malformed item doesn't discard the page.
+    if (parsed.success) return { items: parsed.data.items, tokens };
+    const raw = (firstJsonObject(text) as { items?: unknown[] } | null)?.items ?? [];
+    return { items: raw.map((x) => ItemSchema.safeParse(x)).filter((x) => x.success).map((x) => x.data!), tokens };
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 export async function extractFromPage(args: {
   company: string;
   domain: string;
@@ -30,6 +112,7 @@ export async function extractFromPage(args: {
   url: string;
   title?: string;
   text: string; // relevant excerpt windows of the page
+  provider: Provider;
 }): Promise<{ items: ExtractedItem[]; tokens: number }> {
   const prompt = `You extract evidence of which software tools a company uses, from one web page.
 
@@ -45,12 +128,14 @@ Rules:
 - source_type: job_post for job listings; vendor_case_study for a vendor's customer story/announcement; eng_blog for the company's engineering blog; news; filing; otherwise other.
 - published_date: the page's publish/post date if stated, as YYYY-MM-DD, else "".
 - If there is no evidence, return an empty items array. Never guess.
+- Each item has exactly these fields: tool, signal_type, evidence_quote, source_type, about_target_company (true/false), published_date.
 
 PAGE TEXT:
 """
 ${args.text}
 """`;
 
+  if (args.provider.kind === "you") return viaYou(args.provider.model, prompt);
   const res = await anthropic().messages.parse({
     model: LLM_MODEL,
     max_tokens: 4000,
@@ -119,7 +204,11 @@ export function ruleExtract(text: string, company: string, tools: string[], isJo
   const lowerAll = clean.toLowerCase();
   const co = company.toLowerCase();
   const pageAboutCo = titleUrl.toLowerCase().includes(co) || titleUrl.toLowerCase().includes(co.replace(/\s+/g, ""));
-  void lowerAll;
+  // Page-level: tools that are the page's employer/publisher, not something the company uses.
+  const employer = new Set(tools.filter((tool) => {
+    const te = tool.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp(`${te} is an equal opportunity|${te} is hiring|life at ${te}|join ${te}\\b|our ${te} (office|team|culture)|why ${te}\\b|benefits at ${te}`).test(lowerAll);
+  }));
   const out: ExtractedItem[] = [];
   const seen = new Set<string>();
   for (let si = 0; si < sentences.length; si++) {
@@ -133,10 +222,10 @@ export function ruleExtract(text: string, company: string, tools: string[], isJo
     for (const tool of tools) {
       const t = tool.toLowerCase();
       const re = new RegExp(`\\b${t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
-      if (!re.test(l) || seen.has(tool)) continue;
+      if (!re.test(l) || seen.has(tool) || employer.has(tool)) continue;
       const te = t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       // Reversed relationships: the tool vendor is the employer, or the tool is the company's customer.
-      if (new RegExp(`(within|at|join|joining|about|across) ${te}\\b`).test(l)) continue;
+      if (new RegExp(`(within|at|join|joining|about|across|our) ${te}\\b`).test(l)) continue;
       if (new RegExp(`${te}[^.]{0,80}\\b(use|uses|leverage|leverages|chose|selects?)\\s+${co.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`).test(l)) continue;
       if (!/monitor|log|observab|dashboard|metric|alert|trac|apm|telemetry|sre|reliab|incident|experience|tool|stack|pipe|instrument|migrat/.test(l)) continue;
       let signal: ExtractedItem["signal_type"] = isJobPost ? "hiring_for" : "uses";

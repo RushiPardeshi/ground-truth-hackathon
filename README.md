@@ -49,7 +49,7 @@ company + domain + watchlist
 
 Every call is timed, cost-estimated at list price, capped per run (15 searches, 25 pages, 1 research, 1 answer), logged in the agent trace, and the run total is shown in the UI.
 
-**LLM:** extraction uses Claude (`claude-opus-5-5`, low effort, schema-constrained output). The You.com Inference Router returned 402 (needs purchased credits) on our key. If no working Anthropic key is present, Tripwire switches to a **rule-based extractor** that only emits sentences copied straight from the page, with guards against reversed relationships (e.g. "Splunk uses Anaplan", or Dynatrace hiring an Anaplan architect).
+**LLM (extraction):** provider order is **You.com Inference Router** (same `YDC_API_KEY`, auto-detected via `GET /v1/models` each run; override the model with `TRIPWIRE_YOU_MODEL`), then the Anthropic API (`claude-opus-5-5`), then a **rule-based extractor** that only emits sentences copied straight from the page, with guards against reversed relationships (e.g. "Splunk uses Anaplan", or a Dynatrace job post that lists Anaplan as a skill). Whatever produces the JSON, every quote is then verified against the page text. The trace shows which extractor ran.
 
 ## For agents (MCP + CLI + JSON API)
 
@@ -63,7 +63,7 @@ Tripwire is built to be driven by other agents, e.g. parallel coding agents coor
 
 ```bash
 npm install
-cp .env.example .env.local   # add YDC_API_KEY (and ANTHROPIC_API_KEY for LLM extraction)
+cp .env.example .env.local   # add YDC_API_KEY (ANTHROPIC_API_KEY optional fallback)
 npm run dev                  # http://localhost:3000
 ```
 

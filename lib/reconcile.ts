@@ -113,6 +113,7 @@ export function score(
   r: ReturnType<typeof reconcile>
 ): { score: number; verdict: Snapshot["verdict"]; breakdown: ScoreItem[] } {
   const b: ScoreItem[] = [];
+  evidence = evidence.filter((e) => e.category !== "other");
   if (!evidence.length) return { score: 0, verdict: "No evidence", breakdown: [{ label: "No evidence found", points: 0 }] };
   const inc = r.tools.filter((t) => t.role === "incumbent" && !t.stale);
   const incConfirmed = inc.some((t) => t.confidence !== "Inferred");

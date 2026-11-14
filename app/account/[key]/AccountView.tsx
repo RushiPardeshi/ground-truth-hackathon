@@ -107,7 +107,7 @@ function ConflictRow({ c }: { c: Conflict }) {
   );
 }
 
-export default function AccountView({ accountKey, runId, shared, savedCalls, savedCost }: { accountKey: string; runId?: string; shared: boolean; savedCalls: number; savedCost: number }) {
+export default function AccountView({ accountKey, runId, shared, savedCalls, savedCost, showTrace = false }: { accountKey: string; runId?: string; shared: boolean; savedCalls: number; savedCost: number; showTrace?: boolean }) {
   const [user, setUser] = useUser();
   const [account, setAccount] = useState<Account | null>(null);
   const [snap, setSnap] = useState<Partial<Snapshot> | null>(null);
@@ -320,7 +320,8 @@ export default function AccountView({ accountKey, runId, shared, savedCalls, sav
             </div>
           </Section>
 
-          <Section title="Agent trace" right={<button onClick={() => setTraceOpen(!traceOpen)} className="text-xs text-zinc-500 underline">{traceOpen ? "hide" : "show"}</button>}>
+          {/* Agent trace is a debugging view, hidden from users; open with ?trace=1 */}
+          {showTrace && <Section title="Agent trace" right={<button onClick={() => setTraceOpen(!traceOpen)} className="text-xs text-zinc-500 underline">{traceOpen ? "hide" : "show"}</button>}>
             {traceOpen && (
               <div className="max-h-[560px] overflow-y-auto rounded-xl bg-zinc-950 p-3 font-mono text-[11px] leading-relaxed text-zinc-300">
                 {traceItems.length === 0 && <div className="text-zinc-500">No trace.</div>}
@@ -332,7 +333,7 @@ export default function AccountView({ accountKey, runId, shared, savedCalls, sav
                 {running && <div className="animate-pulse text-zinc-500">…</div>}
               </div>
             )}
-          </Section>
+          </Section>}
         </aside>
       </div>
     </main>

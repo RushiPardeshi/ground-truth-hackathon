@@ -32,5 +32,14 @@ export async function GET() {
       next_refresh: new Date(new Date(a.last_checked_at || a.last_researched_at || Date.now()).getTime() + REFRESH_DAYS * 86400_000).toISOString(),
     };
   });
+  // Sheet order: most relevant first. Rows still researching (or never researched) sit at the
+  // bottom in the order they were added, so they don't jump around mid-run.
+  rows.sort((a, b) => {
+    const ra = a.researched && !a.research_status ? 1 : 0;
+    const rb = b.researched && !b.research_status ? 1 : 0;
+    if (ra !== rb) return rb - ra;
+    if (ra) return (b.score ?? -1) - (a.score ?? -1) || b.receipts - a.receipts || a.company.localeCompare(b.company);
+    return (a.claimed_at ?? "").localeCompare(b.claimed_at ?? "");
+  });
   return NextResponse.json({ workspace, rows, columns: listColumns(), cells: listCells(), savings: totalSavings(), refresh_days: REFRESH_DAYS });
 }

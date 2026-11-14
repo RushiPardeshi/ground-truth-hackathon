@@ -214,7 +214,7 @@ function OrgPanel({ row, user, incumbents, onClose }: { row: Row; user: string; 
         )}
       </div>
       <div className="border-t border-zinc-200 p-3 text-right">
-        <a href={`/account/${encodeURIComponent(row.key)}`} className="text-xs text-indigo-700 hover:underline">Full evidence, change feed & agent trace →</a>
+        <a href={`/account/${encodeURIComponent(row.key)}`} className="text-xs text-indigo-700 hover:underline">All evidence & change feed →</a>
       </div>
     </aside>
   );

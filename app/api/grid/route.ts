@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getOrgMap, latestSnapshot, listAccounts, listCells, listColumns, totalSavings } from "@/lib/db";
 import { orgMapStatus } from "@/lib/orgmap";
 import { queue } from "@/lib/pipeline";
-import { REFRESH_DAYS, ensureScheduler } from "@/lib/scheduler";
+import { cycleRunning, ensureScheduler, getRefreshSettings, intervalDays, nextDue } from "@/lib/scheduler";
 import { activeWorkspaceId, getWorkspace } from "@/lib/workspace";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +29,7 @@ export async function GET() {
       orgmap: !!getOrgMap(a.key),
       orgmap_running: orgMapStatus(a.key).running,
       research_status: queue.active.has(a.key) ? "running" : queue.pending.some((p) => p.key === a.key) ? "queued" : null,
-      next_refresh: new Date(new Date(a.last_checked_at || a.last_researched_at || Date.now()).getTime() + REFRESH_DAYS * 86400_000).toISOString(),
+      next_refresh: nextDue(a.category, a.key),
     };
   });
   // Sheet order: most relevant first. Rows still researching (or never researched) sit at the
@@ -41,5 +41,5 @@ export async function GET() {
     if (ra) return (b.score ?? -1) - (a.score ?? -1) || b.receipts - a.receipts || a.company.localeCompare(b.company);
     return (a.claimed_at ?? "").localeCompare(b.claimed_at ?? "");
   });
-  return NextResponse.json({ workspace, rows, columns: listColumns(), cells: listCells(), savings: totalSavings(), refresh_days: REFRESH_DAYS });
+  return NextResponse.json({ workspace, rows, columns: listColumns(), cells: listCells(), savings: totalSavings(), refresh_days: intervalDays(getRefreshSettings(wsId ?? "observability")), refresh: { ...getRefreshSettings(wsId ?? "observability"), running: cycleRunning(wsId ?? "observability") } });
 }

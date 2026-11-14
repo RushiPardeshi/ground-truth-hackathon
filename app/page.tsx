@@ -220,6 +220,128 @@ function OrgPanel({ row, user, incumbents, onClose }: { row: Row; user: string; 
   );
 }
 
+// ---------------- recurring update settings ----------------
+interface RefreshSettings {
+  enabled: boolean; frequency: "daily" | "weekly" | "monthly" | "custom"; every_days: number;
+  refresh_evidence: boolean; refresh_people: boolean; refresh_columns: boolean; discover_new: boolean; discover_per_cycle: number;
+  scope: "all" | "warm_hot" | "selected"; selected_keys: string[]; max_spend_usd: number; updated_at: string | null; updated_by: string | null;
+}
+interface RefreshLog { at: string; by: string; rows_checked: number; people_runs: number; column_cells: number; new_rows: number; spent_usd: number; stopped: string | null; details: string[] }
+
+function RefreshSettingsPanel({ user, selected, rowCount, columnCount, onClose, onChanged }: { user: string; selected: string[]; rowCount: number; columnCount: number; onClose: () => void; onChanged: () => void }) {
+  const [s, setS] = useState<RefreshSettings | null>(null);
+  const [meta, setMeta] = useState<{ due: number; running: boolean; log: RefreshLog[]; interval_days: number } | null>(null);
+  const [saved, setSaved] = useState(false);
+  const load = useCallback(() => fetch("/api/settings/refresh").then((r) => r.json()).then((d) => { setS((cur) => cur ?? d.settings); setMeta({ due: d.due, running: d.running, log: d.log, interval_days: d.interval_days }); }), []);
+  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    if (!meta?.running) return;
+    const t = setInterval(load, 2500);
+    return () => clearInterval(t);
+  }, [meta?.running, load]);
+  if (!s || !meta) return null;
+  const set = (patch: Partial<RefreshSettings>) => { setS({ ...s, ...patch }); setSaved(false); };
+  const save = async () => {
+    const d = await post("/api/settings/refresh", { ...s, selected_keys: s.scope === "selected" ? (selected.length ? selected : s.selected_keys) : s.selected_keys, user });
+    setS(d.settings); setSaved(true); load(); onChanged();
+  };
+  const runNow = async () => { await save(); await post("/api/settings/refresh/run", { user, force: true }); load(); };
+  const scopeRows = s.scope === "selected" ? (selected.length || s.selected_keys.length) : rowCount;
+  const est = scopeRows * ((s.refresh_evidence ? 0.02 : 0) + (s.refresh_people ? 0.05 : 0) + (s.refresh_columns ? 0.005 * columnCount : 0)) + (s.discover_new ? s.discover_per_cycle * 0.13 : 0);
+  const check = (k: "refresh_evidence" | "refresh_people" | "refresh_columns" | "discover_new", label: string, hint: string) => (
+    <label key={k} className="flex cursor-pointer items-start gap-2 rounded-md border border-zinc-200 p-2 hover:bg-zinc-50">
+      <input type="checkbox" checked={s[k]} onChange={(e) => set({ [k]: e.target.checked } as Partial<RefreshSettings>)} className="mt-0.5" />
+      <span><span className="text-sm font-medium text-zinc-900">{label}</span><span className="block text-xs text-zinc-500">{hint}</span></span>
+    </label>
+  );
+
+  return (
+    <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/30 p-4" onClick={onClose}>
+      <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-1 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-zinc-900">Recurring updates</h2>
+          <button onClick={onClose} className="text-xl leading-none text-zinc-400 hover:text-zinc-900">×</button>
+        </div>
+        <p className="mb-4 text-xs text-zinc-500">You.com agents re-check your sheet on a schedule and add new evidence, job posts and people. Shared by the whole team{s.updated_by ? ` · last changed by ${s.updated_by} ${ago(s.updated_at)}` : ""}.</p>
+
+        <label className="mb-4 flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={s.enabled} onChange={(e) => set({ enabled: e.target.checked })} />
+          <span className="font-medium text-zinc-900">Automatic updates {s.enabled ? "on" : "off"}</span>
+        </label>
+
+        <div className={s.enabled ? "" : "pointer-events-none opacity-50"}>
+          <div className="mb-4">
+            <div className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-500">How often</div>
+            <div className="flex flex-wrap items-center gap-2">
+              {(["daily", "weekly", "monthly", "custom"] as const).map((f) => (
+                <button key={f} onClick={() => set({ frequency: f })} className={`rounded-md border px-3 py-1 text-sm capitalize ${s.frequency === f ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-300 hover:bg-zinc-50"}`}>{f}</button>
+              ))}
+              {s.frequency === "custom" && (
+                <span className="flex items-center gap-1 text-sm">every <input type="number" min={1} value={s.every_days} onChange={(e) => set({ every_days: Number(e.target.value) })} className="w-16 rounded border border-zinc-300 px-1 py-0.5" /> days</span>
+              )}
+            </div>
+          </div>
+
+          <div className="mb-4">
+            <div className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-500">What to update</div>
+            <div className="grid gap-2">
+              {check("refresh_evidence", "Incumbent evidence", "New job posts and news that name your incumbent tools; re-checks known postings for removals (~$0.02 per company)")}
+              {check("refresh_people", "People in each region", "Re-runs every region you've mapped to add new people and update who's still in role (~$0.05 per region)")}
+              {check("refresh_columns", "AI columns", `Re-asks your ${columnCount} AI column${columnCount === 1 ? "" : "s"} for each company (~$0.005 per cell)`)}
+              {check("discover_new", "Find new companies", "Searches Greenhouse, Lever and Ashby job posts for your incumbent tools and adds verified companies (~$0.13 each)")}
+              {s.discover_new && (
+                <span className="ml-7 flex items-center gap-1 text-xs text-zinc-600">up to <input type="number" min={1} max={20} value={s.discover_per_cycle} onChange={(e) => set({ discover_per_cycle: Number(e.target.value) })} className="w-14 rounded border border-zinc-300 px-1 py-0.5" /> new companies per update</span>
+              )}
+            </div>
+          </div>
+
+          <div className="mb-4">
+            <div className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-500">Which companies</div>
+            <div className="flex flex-wrap gap-2">
+              {([["all", `All (${rowCount})`], ["warm_hot", "Warm & Hot only"], ["selected", `Selected rows (${selected.length || s.selected_keys.length})`]] as const).map(([k, label]) => (
+                <button key={k} onClick={() => set({ scope: k })} className={`rounded-md border px-3 py-1 text-sm ${s.scope === k ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-300 hover:bg-zinc-50"}`}>{label}</button>
+              ))}
+            </div>
+            {s.scope === "selected" && <p className="mt-1 text-xs text-zinc-500">Tick rows in the sheet, then save. {selected.length ? `${selected.length} row(s) ticked now.` : "No rows ticked right now; the saved selection is kept."}</p>}
+          </div>
+
+          <div className="mb-4 flex flex-wrap items-center gap-2 text-sm">
+            <span className="text-xs font-medium uppercase tracking-wide text-zinc-500">Spend cap per update</span>
+            $<input type="number" min={0.05} step={0.5} value={s.max_spend_usd} onChange={(e) => set({ max_spend_usd: Number(e.target.value) })} className="w-20 rounded border border-zinc-300 px-1 py-0.5" />
+            <span className="text-xs text-zinc-500">· estimated ~${est.toFixed(2)} if every company is due · stops at the cap</span>
+          </div>
+        </div>
+
+        <div className="mb-4 rounded-md bg-zinc-50 p-2 text-xs text-zinc-600">
+          {s.enabled ? <>Checks run every <b>{meta.interval_days}</b> day{meta.interval_days === 1 ? "" : "s"} per company. <b>{meta.due}</b> compan{meta.due === 1 ? "y is" : "ies are"} due now (the server checks every 15 minutes).</> : "Automatic updates are off. You can still run one now."}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <button onClick={save} className="rounded-md bg-zinc-900 px-4 py-1.5 text-sm font-medium text-white">{saved ? "Saved ✓" : "Save"}</button>
+          <button onClick={runNow} disabled={meta.running} className="rounded-md border border-zinc-300 px-4 py-1.5 text-sm hover:bg-zinc-50 disabled:opacity-50">{meta.running ? "Updating…" : "Save & run now"}</button>
+          {meta.running && <span className="animate-pulse text-xs text-indigo-800">You.com agents are updating your sheet…</span>}
+        </div>
+
+        {meta.log.length > 0 && (
+          <div className="mt-5">
+            <div className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-500">Recent updates</div>
+            <div className="space-y-1.5">
+              {meta.log.slice(0, 5).map((l, i) => (
+                <details key={i} className="rounded-md border border-zinc-200 px-2 py-1 text-xs">
+                  <summary className="cursor-pointer text-zinc-700">
+                    {ago(l.at)} by {l.by} · {l.rows_checked} compan{l.rows_checked === 1 ? "y" : "ies"} checked{l.people_runs ? ` · ${l.people_runs} region runs` : ""}{l.column_cells ? ` · ${l.column_cells} cells` : ""}{l.new_rows ? ` · ${l.new_rows} new` : ""} · ${l.spent_usd.toFixed(2)}{l.stopped ? ` · stopped: ${l.stopped}` : ""}
+                  </summary>
+                  <ul className="mt-1 list-disc pl-4 text-zinc-500">{l.details.map((d, j) => <li key={j}>{d}</li>)}</ul>
+                </details>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ---------------- sheet ----------------
 export default function Sheet() {
   const [user, setUser] = useUser();
@@ -238,11 +360,13 @@ export default function Sheet() {
   const [msg, setMsg] = useState("");
   const [chatBusy, setChatBusy] = useState(false);
   const [newInc, setNewInc] = useState("");
+  const [showRefresh, setShowRefresh] = useState(false);
+  const [refreshInfo, setRefreshInfo] = useState<{ enabled: boolean; running: boolean } | null>(null);
   const chatEnd = useRef<HTMLDivElement>(null);
 
   const load = useCallback(() =>
     fetch("/api/grid").then((r) => r.json()).then((d) => {
-      setWs(d.workspace); setRows(d.rows); setColumns(d.columns); setCells(d.cells); setSavings(d.savings); setRefreshDays(d.refresh_days);
+      setWs(d.workspace); setRows(d.rows); setColumns(d.columns); setCells(d.cells); setSavings(d.savings); setRefreshDays(d.refresh_days); setRefreshInfo(d.refresh ? { enabled: d.refresh.enabled, running: d.refresh.running } : null);
     }), []);
   useEffect(() => { load(); }, [load]);
   useEffect(() => {
@@ -308,7 +432,9 @@ export default function Sheet() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2 border-b border-zinc-100 px-4 py-2 text-sm">
-        <span className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-800">⟳ You.com auto-refresh every {refreshDays} days</span>
+        <button onClick={() => setShowRefresh(true)} title="Recurring update settings" className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs hover:opacity-80 ${refreshInfo?.enabled === false ? "border-zinc-300 bg-zinc-50 text-zinc-600" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}>
+          {refreshInfo?.running ? <span className="animate-spin">⟳</span> : "⟳"} {refreshInfo?.enabled === false ? "Updates off" : `Updates every ${refreshDays} day${refreshDays === 1 ? "" : "s"}`} · ⚙ settings
+        </button>
         <span className="text-xs text-zinc-500">{rows.length} rows</span>
         <button onClick={() => research(sel.size ? [...sel] : allKeys)} disabled={!rows.length} className="rounded-md bg-zinc-900 px-2.5 py-1 text-xs font-medium text-white hover:bg-zinc-700 disabled:opacity-40">▷ Run research {sel.size ? `(${sel.size} selected)` : "(all)"}</button>
         <button onClick={() => setColEdit({ name: "", prompt: "" })} className="rounded-md border border-zinc-300 px-2 py-1 text-xs hover:bg-zinc-50">+ Add column</button>
@@ -421,6 +547,7 @@ export default function Sheet() {
       </div>
 
       {openRow && <OrgPanel row={openRow} user={user} incumbents={ws.incumbents} onClose={() => setOpenKey(null)} />}
+      {showRefresh && <RefreshSettingsPanel user={user} selected={[...sel]} rowCount={rows.length} columnCount={columns.length} onClose={() => setShowRefresh(false)} onChanged={load} />}
 
       {cellOpen && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/30 p-4" onClick={() => setCellOpen(null)}>

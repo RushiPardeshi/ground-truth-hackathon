@@ -26,7 +26,9 @@ CREATE TABLE IF NOT EXISTS savings (
   id INTEGER PRIMARY KEY AUTOINCREMENT, key TEXT, at TEXT, by TEXT, calls INTEGER, cost REAL
 );
 CREATE TABLE IF NOT EXISTS aliases ( alias TEXT PRIMARY KEY, domain TEXT );
+CREATE TABLE IF NOT EXISTS workspaces ( id TEXT PRIMARY KEY, data TEXT, created_at TEXT );
 `);
+try { db.exec("ALTER TABLE accounts ADD COLUMN meta TEXT"); } catch {}
 
 export function getAccount(key: string): Account | null {
   return (db.prepare("SELECT * FROM accounts WHERE key = ?").get(key) as Account) ?? null;
@@ -41,11 +43,11 @@ export function upsertAccount(a: Partial<Account> & { key: string }) {
   const next = { ...(cur ?? {
     key: a.key, company: "", domain: "", category: "", owner: null, claimed_at: null,
     last_researched_at: null, last_researched_by: null, last_checked_at: null, score: null, verdict: null,
-    handoff_requested_by: null,
+    handoff_requested_by: null, meta: null,
   }), ...a } as Account;
   db.prepare(`INSERT OR REPLACE INTO accounts
-    (key, company, domain, category, owner, claimed_at, last_researched_at, last_researched_by, last_checked_at, score, verdict, handoff_requested_by)
-    VALUES (@key, @company, @domain, @category, @owner, @claimed_at, @last_researched_at, @last_researched_by, @last_checked_at, @score, @verdict, @handoff_requested_by)`).run(next);
+    (key, company, domain, category, owner, claimed_at, last_researched_at, last_researched_by, last_checked_at, score, verdict, handoff_requested_by, meta)
+    VALUES (@key, @company, @domain, @category, @owner, @claimed_at, @last_researched_at, @last_researched_by, @last_checked_at, @score, @verdict, @handoff_requested_by, @meta)`).run({ ...next, meta: next.meta ?? null });
   return next;
 }
 
@@ -117,4 +119,7 @@ export function setCell(c: Omit<Cell, "citations"> & { citations: Cell["citation
 }
 export function listCells(): Cell[] {
   return (db.prepare("SELECT * FROM cells").all() as (Omit<Cell, "citations"> & { citations: string })[]).map((r) => ({ ...r, citations: JSON.parse(r.citations || "[]") }));
+}
+export function updateColumn(id: string, name: string, prompt: string) {
+  db.prepare("UPDATE columns SET name = ?, prompt = ? WHERE id = ?").run(name, prompt, id);
 }

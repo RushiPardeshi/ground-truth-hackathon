@@ -2,19 +2,18 @@
 
 **Track: Live Wire** · Ground Truth: The Live Agents Hackathon (powered by You.com)
 
-Tripwire tells an account executive at a challenger observability vendor (Datadog, Grafana, Honeycomb, Chronosphere) **which observability tools a target company runs today, whether it's switching, and why now**. Every claim links to a source, quotes it verbatim, and carries a date. Then Tripwire watches the account and reports what changed.
+Tripwire tells a seller **which incumbent tools a target company runs today, which teams use them, who's on those teams, and why now**. Every claim links to a source, quotes it verbatim, and carries a date. Then Tripwire watches the account and reports what changed.
 
 ![Shared sheet with an expanded org map](docs/orgmap.png)
 
-## The shared sheet
+## How it works for any seller
 
-The home page is a Clay-style **shared team sheet**: one row per account, enriched live by You.com agents.
-
-- **Rows:** paste domains or company names (names resolve to domains, so "Walt Disney Co." and disney.com land on one row). New rows are researched straight away, 2 at a time.
-- **Built-in columns:** Displacement score, incumbent stack, challengers (chips link to the receipt; dot = confidence), top signal, hiring/receipts, owner and last refresh.
-- **AI columns:** "+ Add AI column" with a prompt such as *Which cloud provider does {company} run on?* Every cell is answered by the **You.com Answer API**; click a cell to see its sources and verbatim excerpts.
-- **Drill-down:** ▸ on a row opens the **org map**, company → regions → teams → the software each team uses (verbatim quote + link) and public people on that team (title + link). It's built by the **You.com Research API with a structured `output_schema`**, seeded with our verified evidence. Any tool or person whose source URL isn't among Research's returned sources (or our evidence) is dropped, and the count is shown.
-- **Monthly refresh:** a server scheduler runs a You.com watch pass on every row whose last check is older than 30 days (`TRIPWIRE_REFRESH_DAYS`), adds new evidence, job posts and removed postings to the change feed, and re-scores.
+1. **Start page:** "What does your company sell?" Pick a preset or describe your own. One **You.com Research** call (structured `output_schema`) returns your **incumbent stack** (the tools your buyers already run and you displace) and **10 ideal clients** with industry, HQ, size and why they fit. They become the first rows and start researching right away.
+2. **Shared sheet:** one row per company. Columns: Company · **Incumbent stack** (each chip links to its receipt; dot = Confirmed / Strong / Inferred) · **Relevance** 0–100 · Evidence · Why they fit · Refreshed · your **AI columns**. The incumbent list is editable in the header.
+3. **AI columns:** "+ Add column" with a prompt (e.g. *Which cloud provider does {company} run on?*). Every cell is answered by the **You.com Answer API** with citations. Columns can be edited (✎ re-runs them) or re-run (▷).
+4. **Click a company → right-hand panel:** regions → teams → **incumbent tools each team uses**, each with a **0–100 confidence that the team uses it**, plus **people on that team** with a **0–100 confidence they're still in that role**. Scores are computed deterministically from source type and age (hover to see why), not asserted by a model. **Add a region** (e.g. "North America") and **▷ Run region** to research just that region; results merge into the map. Nodes whose source isn't among Research's returned sources are dropped.
+5. **Chat bar:** `add OpenAI, Anthropic` adds rows and researches them; `add column Cloud: Which cloud does {company} run on?` adds a column; anything else (`find 5 fintech companies like Stripe`) asks You.com Research for more matching clients.
+6. **Monthly refresh:** a server scheduler runs a You.com watch pass on every row whose last check is older than 30 days (`TRIPWIRE_REFRESH_DAYS`), adds new evidence, job posts and removed postings, and re-scores.
 
 ![Account page](docs/account.png)
 
@@ -22,7 +21,7 @@ The home page is a Clay-style **shared team sheet**: one row per account, enrich
 
 Sales teams at challenger vendors burn hours guessing at a prospect's stack. Static technographic databases are months stale and never show *why* they think a company uses Splunk. Tripwire reads the live web on demand (job posts, vendor case studies, engineering blogs, news, and the company's own site code) and shows the receipts.
 
-**Who pays:** AEs and SDR teams at challenger software vendors, priced per watched account per month.
+**Who pays:** AEs and SDR teams at any B2B software company that displaces an incumbent, priced per watched account per month.
 
 ## How it works
 
@@ -56,7 +55,7 @@ company + domain + watchlist
 |---|---|
 | **Web Search** `POST ydc-index.io/v1/search` | Discovery: `include_domains` for ATS boards (Greenhouse, Lever, Ashby, Workday), vendor sites and the company's own site; `freshness: month/week` for recent signals and watch mode; domain resolution for company names |
 | **Contents** `POST ydc-index.io/v1/contents` | Full pages as Markdown for extraction; homepage as **HTML** for script detection (falls back to a plain fetch only if no `<script>` tags come back); `max_age: 0` live re-reads in watch mode |
-| **Research** `POST api.you.com/v1/research` (`research_effort: standard`) | Cited "why now" brief per account; the **org map** (regions → teams → tools & people) via `output_schema` |
+| **Research** `POST api.you.com/v1/research` (`research_effort: standard`) | Onboarding (seller → incumbent stack + 10 ideal clients), chat "find more clients", the **org map** (regions → teams → tools & people, per-region runs), all via `output_schema`; cited "why now" brief per account |
 | **Answer** `POST api.you.com/v1/answer` | AI prompt columns in the sheet (one cited answer per cell); quick cited check on the top conflict |
 
 Every call is timed, cost-estimated at list price, capped per run (15 searches, 25 pages, 1 research, 1 answer), logged in the agent trace, and the run total is shown in the UI.

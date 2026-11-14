@@ -3,13 +3,18 @@ import { getOrgMap, latestSnapshot, listAccounts, listCells, listColumns, totalS
 import { orgMapStatus } from "@/lib/orgmap";
 import { queue } from "@/lib/pipeline";
 import { REFRESH_DAYS, ensureScheduler } from "@/lib/scheduler";
+import { activeWorkspaceId, getWorkspace } from "@/lib/workspace";
 
 export const dynamic = "force-dynamic";
 
 // One call returns the whole shared sheet: rows, built-in columns, prompt columns and cells.
 export async function GET() {
   ensureScheduler();
-  const accounts = listAccounts();
+  const wsId = activeWorkspaceId();
+  const workspace = wsId ? getWorkspace(wsId) : null;
+  const accounts = listAccounts()
+    .filter((a) => a.category === (wsId ?? "observability"))
+    .sort((a, b) => (a.claimed_at ?? "").localeCompare(b.claimed_at ?? "") || a.key.localeCompare(b.key)); // stable sheet order
   const rows = accounts.map((a) => {
     const s = latestSnapshot(a.key);
     const obs = (s?.tools ?? []).filter((t) => t.role !== "other");
@@ -17,7 +22,7 @@ export async function GET() {
       ...a,
       researched: !!s,
       incumbents: obs.filter((t) => t.role === "incumbent").map((t) => ({ tool: t.tool, confidence: t.confidence, stale: t.stale, url: t.evidence[0]?.url })),
-      challengers: obs.filter((t) => t.role === "challenger").map((t) => ({ tool: t.tool, confidence: t.confidence, stale: t.stale, url: t.evidence[0]?.url })),
+      meta: a.meta ? JSON.parse(a.meta) : null,
       top_signal: s?.migrations?.[0]?.description ?? null,
       hiring: s?.hiring?.length ?? 0,
       receipts: s?.evidence?.filter((e) => e.category !== "other").length ?? 0,
@@ -27,5 +32,5 @@ export async function GET() {
       next_refresh: new Date(new Date(a.last_checked_at || a.last_researched_at || Date.now()).getTime() + REFRESH_DAYS * 86400_000).toISOString(),
     };
   });
-  return NextResponse.json({ rows, columns: listColumns(), cells: listCells(), savings: totalSavings(), refresh_days: REFRESH_DAYS });
+  return NextResponse.json({ workspace, rows, columns: listColumns(), cells: listCells(), savings: totalSavings(), refresh_days: REFRESH_DAYS });
 }

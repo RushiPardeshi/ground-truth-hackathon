@@ -1,5 +1,6 @@
 import crypto from "crypto";
-import { CAPS, JOB_DOMAINS, SCRIPT_SIGNATURES, getCategory, type CategoryPreset } from "./config";
+import { CAPS, JOB_DOMAINS, SCRIPT_SIGNATURES, type CategoryPreset } from "./config";
+import { getProfile as getCategory } from "./workspace";
 import { addChanges, getAccount, getAlias, latestSnapshot, saveSnapshot, setAlias, upsertAccount } from "./db";
 import { extractFromPage, markAnthropicDown, normalizeText, pickProvider, quoteAppears, relevantWindows, ruleExtract, type ExtractedItem, type Provider } from "./llm";
 import { canonicalTool, confidenceFor, hostOf, isStale, reconcile, score } from "./reconcile";
@@ -262,7 +263,7 @@ function buildQueries(company: string, domain: string, cat: CategoryPreset, watc
   return [
     { label: "Job boards (ATS)", query: q(`${company} engineer ${orList(watchlist)}`), opts: { include_domains: JOB_DOMAINS, count: 15 } },
     { label: "Careers × incumbents", query: `"${company}" careers job ${orList(inc)}`, opts: { count: 10 } },
-    { label: "Careers × challengers", query: `"${company}" careers job ${orList(chal)}`, opts: { count: 10 } },
+    ...(chal.length ? [{ label: "Careers × other tools", query: `"${company}" careers job ${orList(chal)}`, opts: { count: 10 } }] : []),
     { label: "Migration language", query: `"${company}" migrate from ${orList(inc)}`, opts: { count: 10 } },
     { label: "Vendor case studies", query: `"${company}" customer story`, opts: { include_domains: vendorDomains, count: 10 } },
     { label: "Company site", query: `${orList(watchlist)} ${cat.keywords[0]}`, opts: { include_domains: [domain], count: 10 } },
@@ -300,7 +301,7 @@ export function startResearch(args: StartArgs & { domain: string }): RunState {
 
 async function runResearch(run: Run, args: StartArgs & { domain: string }) {
   const cat = getCategory(args.category);
-  const watchlist = args.watchlist?.length ? args.watchlist : [...cat.incumbents, ...cat.challengers];
+  const watchlist = args.watchlist?.length ? args.watchlist : [...cat.incumbents];
   const { company, domain, user } = args;
   const key = run.state.key;
   const now = new Date().toISOString();
@@ -397,9 +398,9 @@ async function runResearch(run: Run, args: StartArgs & { domain: string }) {
     try {
       const rr = await research(
         run,
-        `You are briefing an account executive at a challenger observability vendor (${cat.challengers.join(", ")}) about ${company} (${domain}).\n` +
+        `You are briefing an account executive at ${cat.seller} (${cat.sellerDescription}) about ${company} (${domain}). The seller displaces: ${cat.incumbents.join(", ")}.\n` +
           `Evidence we already verified:\n${lines}\n\n` +
-          `Write a short "why now" brief (under 200 words): what ${company} runs for observability today, any signs of change (migrations, hiring, cost pressure, re-platforming, leadership change, incidents), and the best angle for outreach. Cite every claim. Say plainly where evidence is thin.`
+          `Write a short "why now" brief (under 200 words): which of those incumbent tools ${company} runs today and where, any signs of change (migrations, hiring, cost pressure, re-platforming, leadership change, incidents), and the best angle for outreach. Cite every claim. Say plainly where evidence is thin.`
       );
       brief = { content: String(rr.output.content), sources: rr.output.sources.map((s) => ({ url: s.url, title: s.title })) };
     } catch (e) {

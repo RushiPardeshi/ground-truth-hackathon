@@ -121,6 +121,7 @@ export interface Account {
   score: number | null;
   verdict: string | null;
   handoff_requested_by: string | null;
+  meta?: string | null; // JSON: { industry, hq, size, why } from onboarding
 }
 
 export interface RunState {

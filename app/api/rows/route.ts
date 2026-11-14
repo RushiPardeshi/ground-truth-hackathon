@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getCategory } from "@/lib/config";
+import { getProfile as getCategory, activeWorkspaceId } from "@/lib/workspace";
 import { getAccount, upsertAccount } from "@/lib/db";
 import { accountKey, resolveDomain } from "@/lib/pipeline";
 
@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 // POST { entries: ["netflix.com", "Anaplan", ...], category, user } — add rows to the shared sheet
 // (no research yet; run the "Research" column to enrich). Existing rows are left untouched.
 export async function POST(req: Request) {
-  const { entries = [], category = "observability", user = "anonymous" } = await req.json();
+  const { entries = [], category = activeWorkspaceId() ?? "observability", user = "anonymous" } = await req.json();
   const cat = getCategory(category);
   const added: string[] = [];
   const errors: string[] = [];

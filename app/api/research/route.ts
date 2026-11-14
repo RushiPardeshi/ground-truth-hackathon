@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { FRESH_HOURS, getCategory } from "@/lib/config";
+import { FRESH_HOURS } from "@/lib/config";
+import { getProfile as getCategory, activeWorkspaceId } from "@/lib/workspace";
 import { getAccount, latestSnapshot, recordSaving } from "@/lib/db";
 import { accountKey, resolveDomain, startResearch } from "@/lib/pipeline";
 
@@ -9,7 +10,7 @@ export const dynamic = "force-dynamic";
 // Returns a coordination decision before spending any API calls.
 export async function POST(req: Request) {
   const body = await req.json();
-  const { company, category = "observability", watchlist, user = "anonymous", force = false } = body;
+  const { company, category = activeWorkspaceId() ?? "observability", watchlist, user = "anonymous", force = false } = body;
   if (!company && !body.domain) return NextResponse.json({ error: "company or domain required" }, { status: 400 });
   let domain: string;
   try {

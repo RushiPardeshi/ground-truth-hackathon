@@ -53,21 +53,20 @@ export const JOB_DOMAINS = [
   "myworkdayjobs.com",
 ];
 
-// Deterministic homepage script signatures. Observability ones count for the category.
+// Deterministic homepage script signatures, matched ONLY against src/href URLs the page loads.
+// A tool counts toward the stack only when it is in the workspace's incumbent watchlist.
 export const SCRIPT_SIGNATURES: { tool: string; pattern: string; category: string }[] = [
   { tool: "Datadog", pattern: "datadoghq-browser-agent.com", category: "observability" },
   { tool: "Datadog", pattern: "browser-intake-datadoghq", category: "observability" },
-  { tool: "Datadog", pattern: "DD_RUM", category: "observability" },
   { tool: "New Relic", pattern: "js-agent.newrelic.com", category: "observability" },
   { tool: "New Relic", pattern: "bam.nr-data.net", category: "observability" },
-  { tool: "New Relic", pattern: "NREUM", category: "observability" },
   { tool: "Dynatrace", pattern: "ruxitagentjs", category: "observability" },
-  { tool: "Dynatrace", pattern: "dynatrace", category: "observability" },
-  { tool: "Splunk", pattern: "splunk-rum", category: "observability" },
-  { tool: "Splunk", pattern: "signalfx", category: "observability" },
+  { tool: "Dynatrace", pattern: ".dynatrace.com/", category: "observability" },
+  { tool: "Splunk", pattern: "splunk-otel-web", category: "observability" },
+  { tool: "Splunk", pattern: "rum-ingest", category: "observability" },
   { tool: "Grafana", pattern: "grafana.net/collect", category: "observability" },
   { tool: "Grafana", pattern: "faro-web-sdk", category: "observability" },
-  { tool: "Honeycomb", pattern: "honeycomb.io", category: "observability" },
+  { tool: "Honeycomb", pattern: "api.honeycomb.io", category: "observability" },
   { tool: "Sentry", pattern: "browser.sentry-cdn.com", category: "observability" },
   { tool: "Sentry", pattern: "ingest.sentry.io", category: "observability" },
   { tool: "Segment", pattern: "cdn.segment.com", category: "other" },

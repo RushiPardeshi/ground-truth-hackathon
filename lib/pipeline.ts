@@ -114,25 +114,30 @@ function priority(url: string, domain: string, cat: CategoryPreset) {
   return { job_post: 0, vendor_case_study: 1, eng_blog: 2, news: 3, filing: 3, other: 4, site_code: 5 }[s];
 }
 
-export function detectScripts(html: string, homepage: string, fetchedDate: string, cat: CategoryPreset): Evidence[] {
-  const tags = html.match(/<script\b[^>]*>[\s\S]*?<\/script>|<link\b[^>]*>/gi) ?? [];
+// Site-code detection. Only scripts/stylesheets the page actually LOADS count (the src/href
+// URL points at the vendor's CDN or beacon host); words inside some other script's text don't
+// (e.g. a session-replay library's list of vendors it can detect). And a tool only counts
+// toward the account's stack if it's in this workspace's incumbent watchlist; everything else
+// is kept as "other" (shown as "Also on their site").
+export function detectScripts(html: string, homepage: string, fetchedDate: string, cat: CategoryPreset, watchlist: string[] = cat.incumbents): Evidence[] {
+  const attrs = [...html.matchAll(/<(?:script|link|iframe|img)\b[^>]*?\s(?:src|href)\s*=\s*["']([^"']+)["'][^>]*>/gi)].map((m) => ({ url: m[1], tag: m[0] }));
+  const watched = new Set(watchlist.map((w) => w.toLowerCase()));
   const out: Evidence[] = [];
   const seen = new Set<string>();
   for (const sig of SCRIPT_SIGNATURES) {
     if (seen.has(sig.tool)) continue;
-    const tag = tags.find((t) => t.toLowerCase().includes(sig.pattern.toLowerCase()));
-    if (!tag) continue;
+    const hit = attrs.find((a) => a.url.toLowerCase().includes(sig.pattern.toLowerCase()));
+    if (!hit) continue;
     seen.add(sig.tool);
-    const i = tag.toLowerCase().indexOf(sig.pattern.toLowerCase());
-    const quote = tag.slice(Math.max(0, i - 40), i + sig.pattern.length + 40).replace(/\s+/g, " ");
+    const inWatchlist = watched.has(sig.tool.toLowerCase());
     out.push({
       id: sha1(homepage + sig.tool),
       tool: sig.tool,
-      category: sig.category === "observability" ? cat.id : "other",
+      category: inWatchlist ? cat.id : "other",
       signal_type: "uses",
-      evidence_quote: quote,
+      evidence_quote: hit.tag.replace(/\s+/g, " ").slice(0, 200),
       url: homepage,
-      title: "Homepage source code",
+      title: "Homepage source code (loaded script)",
       source_type: "site_code",
       date: fetchedDate,
       date_kind: "fetched",
@@ -373,7 +378,7 @@ async function runResearch(run: Run, args: StartArgs & { domain: string }) {
     run.trace("detect", "Contents HTML had no <script> tags; falling back to a plain fetch for script detection");
     html = await plainFetch(homepage, run);
   }
-  const siteEv = detectScripts(html, homepage, today, cat);
+  const siteEv = detectScripts(html, homepage, today, cat, watchlist);
   run.trace("detect", siteEv.length ? `Site code: ${siteEv.map((e) => e.tool).join(", ")}` : "No known scripts detected on homepage", siteEv.map((e) => e.evidence_quote));
   siteEv.forEach(push);
 
